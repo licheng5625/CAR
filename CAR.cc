@@ -27,8 +27,12 @@ void CAR::initialize( int stage){
         EV_LOG("CAR",getHostName()+"road "+myroad);
         IPSocket socket(gate("ipOut"));
         socket.registerProtocol(IP_PROT_MANET);
+        checkTime = 0;
+        arrivalTime=0;
+        beaconInterval = par("beaconInterval");
+        communicationRange = par("communicationRange");
+        neighborValidityInterval = par("neighborValidityInterval");         // maybe will not be used
 
-       // DATAliftime= par("DATAliftime");
        // nextRUtimer= par("nextRUtimer");
       //  RUliftime= par("RUliftime");
         routingTable = check_and_cast<IRoutingTable *>(getModuleByPath(par("routingTableModule")));
@@ -45,6 +49,10 @@ void CAR::initialize( int stage){
             RBVTP_EV<<*iter<<"   "<<tracimanager->commandGetJunctionPosition(*iter)<<endl;
         }*/
         globlePositionTable.setHostName(getSelfIPAddress(),getHostName());
+        beaconTimer = new cMessage("BeaconTimer");
+        purgeNeighborsTimer = new cMessage("PurgeNeighborsTimer");
+        scheduleBeaconTimer();
+        schedulePurgeNeighborsTimer();
         }
     }
  }
@@ -145,4 +153,60 @@ void CAR::processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlIn
          throw cRuntimeError("Unknown packet type");
     }*/
 }
+void CAR::scheduleBeaconTimer()
+{
+    EV_LOG("CAR","Scheduling beacon timer");
+    //std::cout<< "The number of neighbors is: " << neighborPositionTable.getLengthOfPositionTable() << endl;
+    scheduleAt(simTime() + beaconInterval, beaconTimer);
+}
+void CAR::purgeNeighbors()
+{
+    checkTime = simTime();
+    simtime_t deltaTime = checkTime - arrivalTime;
+    std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
+    Coord selfPosition =getSelfPosition();
+    for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it != neighborAddresses.end(); it++)
+    {
+        const IPvXAddress & neighborAddress = *it;
+        Coord neighborPosition = neighborPositionTable.getPosition(neighborAddress);
+        double distance = (selfPosition-neighborPosition).length();
+        if (deltaTime >= 2 * beaconInterval || distance >= 0.8 * communicationRange)
+                {
+                    neighborPositionTable.removePosition(neighborAddress);
+                }
+    }
+}
+simtime_t CAR::getNextNeighborExpiration()
+{
+    simtime_t oldestPosition = neighborPositionTable.getOldestPosition();
+    if (oldestPosition == SimTime::getMaxTime())
+        return oldestPosition;
+    else
+        return oldestPosition + neighborValidityInterval;
+}
 
+void CAR::schedulePurgeNeighborsTimer()
+{
+    CAR_EV << "Scheduling purge neighbors timer" << endl;
+    simtime_t nextExpiration = getNextNeighborExpiration();
+    if (nextExpiration == SimTime::getMaxTime()) {
+        if (purgeNeighborsTimer->isScheduled())
+            cancelEvent(purgeNeighborsTimer);
+    }
+    else {
+        if (!purgeNeighborsTimer->isScheduled())
+            scheduleAt(nextExpiration, purgeNeighborsTimer);
+        else {
+            if (purgeNeighborsTimer->getArrivalTime() != nextExpiration) {
+                cancelEvent(purgeNeighborsTimer);
+                scheduleAt(nextExpiration, purgeNeighborsTimer);
+            }
+        }
+    }
+}
+void CAR::processPurgeNeighborsTimer()
+{
+    CAR_EV << "Processing purge neighbors timer" << endl;
+    purgeNeighbors();
+    schedulePurgeNeighborsTimer();
+}

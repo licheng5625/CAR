@@ -18,7 +18,6 @@
 
 #include "PositionTableforCar.h"
 
-static double const NaN = 0.0 / 0.0;
 
 std::vector<IPvXAddress> PositionTableforCar::getAddresses() const {
     std::vector<IPvXAddress> addresses;
@@ -52,11 +51,15 @@ Coord PositionTableforCar::getPosition(const IPvXAddress & address) const {
 
 void PositionTableforCar::setPosition(const IPvXAddress & address, const Coord & position,const Coord & speed,const std::string hostname) {
     ASSERT(!address.isUnspecified());
-    //addressToPositionMap[address] = CarInformation(simTime(),hostname, position,speed);
-    addressToPositionMap[address] = CarInformation();//¡¢¡¢,hostname, position,speed);
-
+    addressToPositionMap[address] = CarInformation(simTime(),hostname, position,speed);
 }
-
+simtime_t PositionTableforCar::getCreateTime(const IPvXAddress & address) {
+    AddressToPositionMap::const_iterator it = addressToPositionMap.find(address);
+        if (it == addressToPositionMap.end())
+            return SimTime::getMaxTime();
+        else
+            return it->second.createTime;
+}
 Coord PositionTableforCar::getSpeed(const IPvXAddress & address) const {
     AddressToPositionMap::const_iterator it = addressToPositionMap.find(address);
     if (it == addressToPositionMap.end())

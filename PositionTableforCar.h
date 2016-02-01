@@ -24,6 +24,7 @@
 #include "INETDefs.h"
 #include "IPvXAddress.h"
 #include "Coord.h"
+static double const NaN = 0.0 / 0.0;
 
 /**
  * This class provides a mapping between node addresses and their positions.
@@ -35,12 +36,12 @@ class CarInformation {
         Coord speed;
         bool Coordinator;
         simtime_t createTime;
-        CarInformation()//simtime_t createTime,const std::string hostname ,const Coord  position,const Coord speed)
+        CarInformation(simtime_t createTime=0,const std::string hostname ="",const Coord  position=Coord(NaN, NaN, NaN),const Coord speed=Coord(NaN, NaN, NaN))
         {
-           // this->createTime=createTime;
-           // this->hostName=hostname;
-           // this->position=position;
-          //  this->speed=speed;
+            this->createTime=createTime;
+            this->hostName=hostname;
+            this->position=position;
+            this->speed=speed;
         }
 };
 class INET_API PositionTableforCar {
@@ -59,6 +60,7 @@ class INET_API PositionTableforCar {
         void setPosition(const IPvXAddress & address, const Coord & position,const Coord & speed,const std::string hostname);
         void setSpeed(const IPvXAddress & address, const Coord & speed);
         Coord getSpeed(const IPvXAddress & address) const;
+        simtime_t getCreateTime(const IPvXAddress & address) ;
 
         void setHostName(const IPvXAddress & address, const std::string hostname);
         std::string getHostName(const IPvXAddress & address) const;

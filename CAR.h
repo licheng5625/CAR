@@ -17,7 +17,7 @@
 #include "routeInterface/BroadcastWaitingTable.h"
 #include "routeInterface/DelayPacketTable.h"
 #include "CAR/PositionTableforCar.h"
-
+#include "CAR/carRouting_msg.h"
 class INET_API CAR:public RouteInterface {
 public:
     CAR();
@@ -38,12 +38,14 @@ protected:
     simtime_t checkTime;
     simtime_t arrivalTime;
     simtime_t neighborValidityInterval;
+    simtime_t maxJitter;
 
     // communication Range
       double communicationRange;
 
     PositionTableforCar neighborPositionTable;
     PositionTableforCar guardsTable;
+
 private:
     virtual Result datagramPreRoutingHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop);
     virtual Result datagramForwardHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop){ return ACCEPT; }
@@ -51,7 +53,7 @@ private:
     virtual Result datagramLocalInHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry);//{ return ACCEPT; }
     virtual Result datagramLocalOutHook(IPv4Datagram * datagram, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop);
 
-
+    void EV_LOG(std::string context);
     void scheduleBeaconTimer();
     void schedulePurgeNeighborsTimer();
 
@@ -59,6 +61,12 @@ private:
     simtime_t getNextNeighborExpiration();
 
     void processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlInfo);
+    void processBeaconTimer();
+    void processBeacon(carBeacon * beacon);
+
+    carBeacon * createBeacon();
+    void sendBeacon(carBeacon * beacon, double delay);
+    Coord caculateEstimatedPosition(Coord oldposition,Coord speed,simtime_t time);
 
  };
 

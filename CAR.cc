@@ -29,6 +29,7 @@ void CAR::initialize( int stage){
         socket.registerProtocol(IP_PROT_MANET);
         checkTime = 0;
         arrivalTime=0;
+        seqNumOfPGB=0;
         beaconInterval = par("beaconInterval");
         communicationRange = par("communicationRange");
         neighborValidityInterval = par("neighborValidityInterval");         // maybe will not be used
@@ -36,6 +37,7 @@ void CAR::initialize( int stage){
        // nextRUtimer= par("nextRUtimer");
       //  RUliftime= par("RUliftime");
         routingTable = check_and_cast<IRoutingTable *>(getModuleByPath(par("routingTableModule")));
+        alpha = par("alpha");
 
         //reBoardcastRDTimer = new cMessage("ReBoardcastRDTimer");;
     }else{
@@ -106,12 +108,29 @@ INetfilter::IHook::Result CAR::datagramLocalOutHook(IPv4Datagram * datagram, con
            return ACCEPT;
        }
            else {
-               EV_LOG("check rbvtppacket");
-
+               EV_LOG("check PGB");
+               PGB * PGBpacket=dynamic_cast<PGB *>( (dynamic_cast<UDPPacket *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()))->getEncapsulatedPacket());
+               AGF * AGFpacket=dynamic_cast<AGF *>( (dynamic_cast<UDPPacket *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()))->getEncapsulatedPacket());
+               if(PGBpacket!=NULL||AGFpacket!=NULL)
+               {
+                   return ACCEPT;
+               }
            }
+       startRouteDiscovery(destination);
         delayPacketlist.addPacket(destination,datagram);
        return  QUEUE;
 }
+void CAR::startRouteDiscovery(const IPv4Address & destAddr)
+{
+    CAR_EV << "Starting route discovery with originator "<< getSelfAddress()<< " and destination "<< destAddr << endl;
+    //aSetOfAnchorPoints.clear();
+    //std::cout<< aSetOfAnchorPoints.size() << endl;
+    PGB * pgbPacket = createPGB(destAddr);
+    //seqNumOfPGB++;
+    //pgbPacket->setSeqNum(seqNumOfPGB);
+    sendPGB(pgbPacket, 0.0);
+ }
+
 INetfilter::IHook::Result  CAR::datagramLocalInHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry)
 {
     return ACCEPT;
@@ -125,13 +144,12 @@ void CAR::processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlIn
         EV_LOG("processMessage: Beacon");
         processBeacon((carBeacon *)ctrlPacket);
      }
-    // We don't need this carPacket anymore
-  /*
+
     else if (dynamic_cast<PGB *>(ctrlPacket))
         receivePGB((PGB *)ctrlPacket);
     else if (dynamic_cast<AGF *>(ctrlPacket))
         receiveAGF((AGF *)ctrlPacket);
-    else if (dynamic_cast<stGuard *>(ctrlPacket))
+      /*  else if (dynamic_cast<stGuard *>(ctrlPacket))
         receiveStGuard((stGuard *)ctrlPacket);
     else if (dynamic_cast<trGuard *>(ctrlPacket))
         receiveTrGuard((trGuard *)ctrlPacket);*/
@@ -140,12 +158,12 @@ void CAR::processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlIn
         EV_LOG("Unknown UDP packet");
         throw cRuntimeError("Unknown UDP packet");
     }
-    delete ctrlPacket;
+    //delete ctrlPacket;
 }
 void CAR::scheduleBeaconTimer()
 {
     EV_LOG("Scheduling beacon timer");
-    //std::cout<< "The number of neighbors is: " << neighborPositionTable.getLengthOfPositionTable() << endl;
+    //todo :  The fewer neighbors there are, the more frequent is a node¡¯s HELLO beaconing.
     scheduleAt(simTime() + beaconInterval, beaconTimer);
 }
 void CAR::purgeNeighbors()
@@ -240,4 +258,272 @@ void CAR::processBeacon(carBeacon * beacon)
 void CAR::EV_LOG(std::string context)
 {
     RouteInterface::EV_LOG("CAR",context);
+}
+
+/************************/
+/**** path discovery ****/
+/************************/
+
+PGB * CAR::createPGB(const IPvXAddress & destAddress)
+{
+    simtime_t travelTime = 0;
+    unsigned int numOfHops = 0;
+    std::string name="pgbPacket_"+getHostName()+std::to_string(seqNumOfPGB++);
+    PGB * pgbPacket = new PGB(name.c_str());
+    pgbPacket->setOriginatorAddress(getSelfAddress());
+    pgbPacket->setOriginatorPosition(getSelfPosition());
+    pgbPacket->setOriginatorSpeed(getSelfSpeed());
+    pgbPacket->setDestAddress(destAddress);
+    pgbPacket->setPreviousForwarderSpeed(getSelfSpeed());
+    pgbPacket->setPreviousForwarderPosition(getSelfPosition());
+    //pgbPacket->setPgbCounter(pgbCounter);
+    pgbPacket->setTravelTime(0);
+    pgbPacket->setNumOfHops(0);
+    pgbPacket->setSeqNum(seqNumOfPGB);
+    std::vector<anchor> aSetOfAnchorPoints;
+    anchor * newAnchorPoint = addAsAnAnchor(mobility->getCurrentSpeed(), mobility->getCurrentSpeed(), mobility->getCurrentPosition(), mobility->getCurrentPosition());
+    aSetOfAnchorPoints.push_back(*newAnchorPoint);
+    pgbPacket->setASetOfAnchorPoints(aSetOfAnchorPoints);
+    return pgbPacket;
+}
+
+AGF * CAR::createAGF(PGB * pgbPacket)
+{
+    EV_LOG ( "createAGF" );
+    string name =pgbPacket->getName();
+    AGF * agfPacket = new AGF(name.replace(0,3,"afg").c_str());
+    agfPacket->setOriginatorAddress(pgbPacket->getOriginatorAddress());
+    agfPacket->setDestAddress(getSelfAddress());
+    agfPacket->setDestPosition(mobility->getCurrentPosition());
+    agfPacket->setDestSpeed(mobility->getCurrentSpeed());
+    agfPacket->setTravelTime(pgbPacket->getTravelTime());
+    agfPacket->setNumOfHops(pgbPacket->getNumOfHops());
+    std::vector<anchor> a = pgbPacket->getASetOfAnchorPoints();
+    agfPacket->setASetOfAnchorPoints(a);
+  //  anchorIndexReverse = aSetOfAnchorPoints.size();
+
+    return agfPacket;
+}
+
+void CAR::sendPGB(PGB * pgbPacket, double delay)
+{
+    CAR_EV << "Sending PGB packet: address = " << pgbPacket->getOriginatorAddress()
+            << ", position = " << pgbPacket->getOriginatorPosition() << ", speed = " << pgbPacket->getOriginatorSpeed() << endl;
+    MulticastRIPacket(pgbPacket,255,delay);
+}
+void CAR::sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay)
+{
+    CAR_EV << "Sending AGF Route Reply to "<< agfPacket->getOriginatorAddress() << endl;
+    std::cout << "Sending AGF Route Reply to "<< agfPacket->getOriginatorAddress() << "   nexthop to "<<nextHop<< endl;
+    sendRIPacket(agfPacket,nextHop,255,delay);
+}
+/******************/
+/**** position ****/
+/******************/
+
+anchor * CAR::addAsAnAnchor(Coord speed1, Coord speed2, Coord position1, Coord position2)
+{
+    anchor * anchorPoint = new anchor();
+    anchorPoint->setPositionOfCurrentNode(position2);
+    anchorPoint->setPositionOfPreviousForwarder(position1);
+    anchorPoint->setSpeedOfCurrentNode(speed2);
+    anchorPoint->setSpeedOfPreviousForwarder(speed1);
+    Coord position = caculateTheCoordOfTheAnchor(position1, position2);
+    anchorPoint->setPosition(position);
+    std::cout << "Next Anchor is : " << getHostName() << endl;
+    return anchorPoint;
+}
+
+Coord CAR::caculateTheCoordOfTheAnchor(Coord position1, Coord position2)
+{
+    // how to determine the coordination of the anchor is still not decided
+    double x1 = position1.x;
+    double y1 = position1.y;
+    double x2 = position2.x;
+    double y2 = position2.y;
+    double x = x2;
+    double y = y2;
+    return Coord(x, y, 0);
+}
+
+
+std::vector<anchor> CAR::addNewOneToSetOfAnchorPoints(anchor * anchorPoint)
+{
+    aSetOfAnchorPoints.push_back(* anchorPoint);
+    //std::cout<< aSetOfAnchorPoints.back().getPosition() << endl;
+    //std::cout<< aSetOfAnchorPoints.size() << endl;
+    return aSetOfAnchorPoints;
+}
+bool CAR::isSeenPGB(IPvXAddress ipadd, int seqnum)
+{
+    if (PGBTable.count(ipadd) == 0 )
+       {
+        EV_LOG ("PGBTable.count =0");
+        return false;
+       }else
+       {
+           EV_LOG ("PGBTable.count !=0");
+
+           bool flag =false;
+           std::vector<std::pair < simtime_t,int > > oldlist= PGBTable[ipadd];
+           EV_LOG (std::to_string(oldlist.size()));
+           std::vector<std::pair < simtime_t,int > > newlist;
+           for(int i=0;i<oldlist.size();i++)
+           {
+              if( simTime()- (oldlist[i].first) <60)
+              {
+                  if(oldlist[i].second==seqnum)
+                  {
+                      flag =true;
+                      oldlist[i].first=simTime();
+                  }
+                  newlist.push_back(oldlist[i]);
+              }
+           }
+           PGBTable[ipadd]=newlist;
+           return flag;
+       }
+}
+
+void CAR::receivePGB(PGB * pgbPacket)
+{
+    EV_LOG("Process PGB");
+
+    CAR_EV <<getSelfAddress()<< "  Receiving PGB from " << pgbPacket->getOriginatorAddress() << " to " << pgbPacket->getDestAddress() << endl;
+    std::cout <<getSelfAddress()<< "  Receiving PGB from " << pgbPacket->getOriginatorAddress() << " to " << pgbPacket->getDestAddress() << endl;
+    if(getSelfAddress()==pgbPacket->getOriginatorAddress())
+    {
+        EV_LOG("  Receiving self PGB drop " );
+        return;
+    }
+    simtime_t arrivalTime = pgbPacket->getArrivalTime();
+    std::cout<< pgbPacket->getSeqNum()<<"   " << pgbPacket->getOriginatorAddress()<< endl;
+    if (!isSeenPGB(pgbPacket->getOriginatorAddress(),pgbPacket->getSeqNum()))
+    {
+        EV_LOG("  not a seen PGB " );
+        //simTime() as arrivaltime
+        PGBTable[pgbPacket->getOriginatorAddress()].push_back(std::pair < simtime_t,int >(simTime(), pgbPacket->getSeqNum()));
+        if (pgbPacket->getDestAddress() == getSelfAddress())
+               {
+                   EV_LOG ( "The PGB packet reaches its destination!!!" );
+                   AGF * agfPacket = createAGF(pgbPacket);
+                   agfPacket->makeACopy();
+                   std::vector<anchor> reverseRoute = agfPacket->getASetOfAnchorPoints();
+                   IPvXAddress bestNextHopAddress = findReverseNextHop(reverseRoute);
+                   agfPacket->setCopyOfASetOfAnchorPoints(reverseRoute);
+                   sendAGF(agfPacket, bestNextHopAddress.get4(), uniform(0, maxJitter).dbl());
+               }
+            else
+                {
+                    EV_LOG ( "passing on the PGB packet" );
+                    Coord theSpeedOfPreviousForwarder = pgbPacket->getPreviousForwarderSpeed();
+                    Coord thePositionOfPrreviousForwarder = pgbPacket->getPreviousForwarderPosition();
+                    Coord currentSpeed = getSelfSpeed();
+                    Coord currentPosition = getSelfPosition();
+                    std::vector<anchor> anchorSet = pgbPacket->getASetOfAnchorPoints();
+                    std::cout << pgbPacket->getPreviousForwarderSpeed() << "    " << getSelfSpeed();
+                    pgbPacket->setPreviousForwarderSpeed(currentSpeed);
+                    pgbPacket->setPreviousForwarderPosition(currentPosition);
+                    pgbPacket->setTravelTime(pgbPacket->getTravelTime() + simTime() - pgbPacket->getSendingTime());
+                    pgbPacket->setNumOfHops(pgbPacket->getNumOfHops() + 1);
+                    double angle1 = getVectorAngle(theSpeedOfPreviousForwarder) / (2 * PI) * 360;
+                    double angle2 = getVectorAngle(currentSpeed) / (2 * PI) * 360;
+                    double delta = angle1 - angle2;
+                    if(delta < (-alpha) || delta >= alpha)
+                        {
+                            anchor * newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, currentSpeed, thePositionOfPrreviousForwarder, currentPosition);
+                            std::cout<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
+                            anchorSet.push_back(*newAnchorPoint);
+                            pgbPacket->setASetOfAnchorPoints(anchorSet);
+                            std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "
+                                    << pgbPacket->getASetOfAnchorPoints().size()<< endl;
+                        }
+                    sendPGB(pgbPacket, uniform(0, maxJitter).dbl());
+                }
+    }
+    else
+    {
+        EV_LOG("  Receiving same PGB drop " );
+        return;
+    }
+}
+void CAR::receiveAGF(AGF * agfPacket)
+{
+    CAR_EV << "Receiving AGF Route Reply from: " << agfPacket->getDestAddress() << "back to " << agfPacket->getOriginatorAddress() << endl;
+    std::cout <<getSelfAddress()<< "Receiving AGF Route Reply from: " << agfPacket->getDestAddress() << "back to " << agfPacket->getOriginatorAddress() << endl;
+    if (getSelfAddress() == agfPacket->getOriginatorAddress())
+    {
+        EV_LOG ("The AGF Route Reply reaches the originator!!!");
+       // routeDiscoveryIsFinished = true;
+      //  routingTableCar routeInfo ;
+      //  routeInfo.setRouteInfo(agfPacket->getASetOfAnchorPoints());
+      //  completeRouteDiscovery(agfPacket->getOriginatorAddress().get4());
+    }
+    else
+    {
+        std::cout << "agfPacket->getCopyOfASetOfAnchorPoints()   "<<agfPacket->getCopyOfASetOfAnchorPoints().size() <<endl;
+        IPv4Address bestNextHopAddress;
+        if (agfPacket->getCopyOfASetOfAnchorPoints().size()!=0)
+        {
+            Coord nextReverseAnchorPosition = agfPacket->getCopyOfASetOfAnchorPoints().back().getPosition();
+            std::vector<anchor> temVector = agfPacket->getCopyOfASetOfAnchorPoints();
+
+            //temVector.pop_back();
+
+            agfPacket->setCopyOfASetOfAnchorPoints(temVector);
+            IPvXAddress selfAddress = getSelfAddress();
+            Coord selfPosition = getSelfPosition();
+            //Coord nextAnchorPosition = findNextAnchorPosition();
+            double bestDistance = (selfPosition-nextReverseAnchorPosition).length();
+            std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
+            std::cout << "neighborAddresses   "<<neighborAddresses.size() <<endl;
+
+            for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
+            {
+                const IPvXAddress & neighborAddress = * it;
+                Coord neighborPosition = neighborPositionTable.getPosition(neighborAddress);
+                double distance = (neighborPosition-nextReverseAnchorPosition).length();
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestNextHopAddress = neighborAddress.get4();
+                }
+            }
+        }
+        sendAGF(agfPacket, bestNextHopAddress, uniform(0, maxJitter).dbl());
+    }
+}
+IPvXAddress CAR::findReverseNextHop(std::vector<anchor>& reverseRoute)
+{
+    EV_LOG( "Finding the reverse next hop for the Routing" );
+    CAR_EV <<  reverseRoute.size()  << endl;
+    std::cout <<  reverseRoute.size()  << endl;
+
+    IPvXAddress selfAddress = getSelfAddress();
+    IPvXAddress bestNextHopAddress;
+    Coord selfPosition = getSelfPosition();
+    anchor nextAnchorPoint = reverseRoute.back();
+    Coord nextReverseAnchorPosition = nextAnchorPoint.getPosition();
+    reverseRoute.pop_back();
+    double bestDistance = (selfPosition- nextReverseAnchorPosition).length();
+    std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
+    for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
+    {
+        const IPvXAddress & neighborAddress = * it;
+        Coord neighborPosition = neighborPositionTable.getPosition(neighborAddress);
+        double distance = (neighborPosition-nextReverseAnchorPosition).length();
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestNextHopAddress = neighborAddress.get4();
+        }
+    }
+    std::cout <<  bestNextHopAddress  << endl;
+    return bestNextHopAddress;
+}
+
+double CAR::getVectorAngle(Coord vector)
+{
+    double angle = atan2(-vector.y, vector.x);
+    if (angle < 0)
+        angle += 2 * PI;
+    return angle;
 }

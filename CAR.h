@@ -39,9 +39,12 @@ protected:
     simtime_t arrivalTime;
     simtime_t neighborValidityInterval;
     simtime_t maxJitter;
-
+    int seqNumOfPGB;
     // communication Range
-      double communicationRange;
+    double communicationRange;
+    std::vector<anchor> aSetOfAnchorPoints;
+    std::map < IPvXAddress, std::vector<std::pair < simtime_t,int > > > PGBTable;
+    double alpha;
 
     PositionTableforCar neighborPositionTable;
     PositionTableforCar guardsTable;
@@ -67,6 +70,19 @@ private:
     carBeacon * createBeacon();
     void sendBeacon(carBeacon * beacon, double delay);
     Coord caculateEstimatedPosition(Coord oldposition,Coord speed,simtime_t time);
+    void startRouteDiscovery(const IPv4Address & destAddr);
+    PGB * createPGB(const IPvXAddress & destAddress);
+    AGF * createAGF(PGB * pgbPacket);
+    void  sendPGB(PGB * pgbPacket, double delay);
+    void sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay);
+    std::vector<anchor> addNewOneToSetOfAnchorPoints(anchor * anchorPoint);
+    Coord caculateTheCoordOfTheAnchor(Coord position1, Coord position2);
+    anchor * addAsAnAnchor(Coord speed1, Coord speed2, Coord position1, Coord position2);
+    bool isSeenPGB(IPvXAddress ipadd, int seqnum);
+    void receivePGB(PGB * pgbPacket);
+    void receiveAGF(AGF * agfPacket);
+    IPvXAddress findReverseNextHop(std::vector<anchor>& reverseRoute);
+    double getVectorAngle(Coord vector);
 
  };
 

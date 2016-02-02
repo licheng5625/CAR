@@ -29,6 +29,8 @@
 #include "Coord.h"  
 #include "simtime_t.h"
 #include <vector>
+#include "anchor.h"
+
 // }}
 
 
@@ -81,116 +83,8 @@ class INET_API carBeacon : public ::cPacket
 inline void doPacking(cCommBuffer *b, carBeacon& obj) {obj.parsimPack(b);}
 inline void doUnpacking(cCommBuffer *b, carBeacon& obj) {obj.parsimUnpack(b);}
 
-/**
- * Class generated from <tt>networklayer/routing/carRouting/carRouting.msg</tt> by opp_msgc.
- * <pre>
- * class anchor {
- *     Coord positionOfPreviousForwarder;
- *     Coord positionOfCurrentNode;
- *     Coord speedOfPreviousForwarder;
- *     Coord speedOfCurrentNode;
- *     Coord position;
- * }
- * </pre>
- */
-class INET_API anchor : public ::cObject
-{
-  protected:
-    Coord positionOfPreviousForwarder_var;
-    Coord positionOfCurrentNode_var;
-    Coord speedOfPreviousForwarder_var;
-    Coord speedOfCurrentNode_var;
-    Coord position_var;
 
-  private:
-    void copy(const anchor& other);
 
-  protected:
-    // protected and unimplemented operator==(), to prevent accidental usage
-    bool operator==(const anchor&);
-
-  public:
-    anchor();
-    anchor(const anchor& other);
-    virtual ~anchor();
-    anchor& operator=(const anchor& other);
-    virtual anchor *dup() const {return new anchor(*this);}
-    virtual void parsimPack(cCommBuffer *b);
-    virtual void parsimUnpack(cCommBuffer *b);
-
-    // field getter/setter methods
-    virtual Coord& getPositionOfPreviousForwarder();
-    virtual const Coord& getPositionOfPreviousForwarder() const {return const_cast<anchor*>(this)->getPositionOfPreviousForwarder();}
-    virtual void setPositionOfPreviousForwarder(const Coord& positionOfPreviousForwarder);
-    virtual Coord& getPositionOfCurrentNode();
-    virtual const Coord& getPositionOfCurrentNode() const {return const_cast<anchor*>(this)->getPositionOfCurrentNode();}
-    virtual void setPositionOfCurrentNode(const Coord& positionOfCurrentNode);
-    virtual Coord& getSpeedOfPreviousForwarder();
-    virtual const Coord& getSpeedOfPreviousForwarder() const {return const_cast<anchor*>(this)->getSpeedOfPreviousForwarder();}
-    virtual void setSpeedOfPreviousForwarder(const Coord& speedOfPreviousForwarder);
-    virtual Coord& getSpeedOfCurrentNode();
-    virtual const Coord& getSpeedOfCurrentNode() const {return const_cast<anchor*>(this)->getSpeedOfCurrentNode();}
-    virtual void setSpeedOfCurrentNode(const Coord& speedOfCurrentNode);
-    virtual Coord& getPosition();
-    virtual const Coord& getPosition() const {return const_cast<anchor*>(this)->getPosition();}
-    virtual void setPosition(const Coord& position);
-};
-
-inline void doPacking(cCommBuffer *b, anchor& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, anchor& obj) {obj.parsimUnpack(b);}
-
-/**
- * Class generated from <tt>networklayer/routing/carRouting/carRouting.msg</tt> by opp_msgc.
- * <pre>
- * packet carPacket {
- *     Coord destinationPosition;
- *     IPvXAddress destinationAddress;
- *     IPvXAddress senderAddress;
- *     anchor  Anchor;
- * }
- * </pre>
- */
-class INET_API carPacket : public ::cPacket
-{
-  protected:
-    Coord destinationPosition_var;
-    IPvXAddress destinationAddress_var;
-    IPvXAddress senderAddress_var;
-    anchor Anchor_var;
-
-  private:
-    void copy(const carPacket& other);
-
-  protected:
-    // protected and unimplemented operator==(), to prevent accidental usage
-    bool operator==(const carPacket&);
-
-  public:
-    carPacket(const char *name=NULL, int kind=0);
-    carPacket(const carPacket& other);
-    virtual ~carPacket();
-    carPacket& operator=(const carPacket& other);
-    virtual carPacket *dup() const {return new carPacket(*this);}
-    virtual void parsimPack(cCommBuffer *b);
-    virtual void parsimUnpack(cCommBuffer *b);
-
-    // field getter/setter methods
-    virtual Coord& getDestinationPosition();
-    virtual const Coord& getDestinationPosition() const {return const_cast<carPacket*>(this)->getDestinationPosition();}
-    virtual void setDestinationPosition(const Coord& destinationPosition);
-    virtual IPvXAddress& getDestinationAddress();
-    virtual const IPvXAddress& getDestinationAddress() const {return const_cast<carPacket*>(this)->getDestinationAddress();}
-    virtual void setDestinationAddress(const IPvXAddress& destinationAddress);
-    virtual IPvXAddress& getSenderAddress();
-    virtual const IPvXAddress& getSenderAddress() const {return const_cast<carPacket*>(this)->getSenderAddress();}
-    virtual void setSenderAddress(const IPvXAddress& senderAddress);
-    virtual anchor& getAnchor();
-    virtual const anchor& getAnchor() const {return const_cast<carPacket*>(this)->getAnchor();}
-    virtual void setAnchor(const anchor& Anchor);
-};
-
-inline void doPacking(cCommBuffer *b, carPacket& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, carPacket& obj) {obj.parsimUnpack(b);}
 
 /**
  * Class generated from <tt>networklayer/routing/carRouting/carRouting.msg</tt> by opp_msgc.

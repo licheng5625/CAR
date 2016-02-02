@@ -227,7 +227,7 @@ class INET_API AGF : public ::cPacket
     virtual AGF *dup() const {return new AGF(*this);}
     virtual void parsimPack(cCommBuffer *b);
     virtual void parsimUnpack(cCommBuffer *b);
-    std::vector<anchor> copyOfASetOfAnchorPoints_var;
+    int anchorIndex;
 
     // field getter/setter methods
     virtual IPvXAddress& getOriginatorAddress();
@@ -252,9 +252,8 @@ class INET_API AGF : public ::cPacket
     virtual void setDestSpeed(const Coord& destSpeed);
     virtual std::vector<anchor> getASetOfAnchorPoints() const;
     virtual void setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints);
-    virtual void makeACopy();
-    virtual std::vector<anchor> getCopyOfASetOfAnchorPoints() ;
-    virtual void setCopyOfASetOfAnchorPoints(std::vector<anchor> copyOfASetOfAnchorPoints);
+    virtual int getAnchorIndex();
+    virtual void setAnchorIndex(int anchorIndex);
 };
 
 inline void doPacking(cCommBuffer *b, AGF& obj) {obj.parsimPack(b);}
@@ -284,7 +283,7 @@ class INET_API carPacket : public ::cPacket
     virtual carPacket *dup() const {return new carPacket(*this);}
     virtual void parsimPack(cCommBuffer *b);
     virtual void parsimUnpack(cCommBuffer *b);
-    std::vector<anchor> copyOfASetOfAnchorPoints_var;
+    int anchorIndex;
 
     // field getter/setter methods
     virtual Coord& getDestinationPosition();
@@ -298,11 +297,8 @@ class INET_API carPacket : public ::cPacket
     virtual void setDestinationAddress(const IPvXAddress& destinationAddress);
     virtual std::vector<anchor> getASetOfAnchorPoints() ;
     virtual void setASetOfAnchorPoints(std::vector<anchor>& aSetOfAnchorPoints);
-    virtual void PopUpAnchorPoints();
-    virtual std::vector<anchor> getCopyOfASetOfAnchorPoints() ;
-    virtual void setCopyOfASetOfAnchorPoints(std::vector<anchor>& copyOfASetOfAnchorPoints);
-    virtual void makeACopy();
-
+    virtual int getAnchorIndex();
+    virtual void setAnchorIndex(int anchorIndex);
 };
 
 inline void doPacking(cCommBuffer *b, carPacket& obj) {obj.parsimPack(b);}

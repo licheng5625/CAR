@@ -864,7 +864,7 @@ void AGF::copy(const AGF& other)
     this->destPosition_var = other.destPosition_var;
     this->destSpeed_var = other.destSpeed_var;
     this->aSetOfAnchorPoints_var = other.aSetOfAnchorPoints_var;
-    this->copyOfASetOfAnchorPoints_var = other.copyOfASetOfAnchorPoints_var;
+    this->anchorIndex = other.anchorIndex;
 }
 
 void AGF::parsimPack(cCommBuffer *b)
@@ -879,7 +879,7 @@ void AGF::parsimPack(cCommBuffer *b)
     doPacking(b,this->destPosition_var);
     doPacking(b,this->destSpeed_var);
     doPacking(b,this->aSetOfAnchorPoints_var);
-    doPacking(b,this->copyOfASetOfAnchorPoints_var);
+    doPacking(b,this->anchorIndex);
 }
 
 void AGF::parsimUnpack(cCommBuffer *b)
@@ -894,7 +894,7 @@ void AGF::parsimUnpack(cCommBuffer *b)
     doUnpacking(b,this->destPosition_var);
     doUnpacking(b,this->destSpeed_var);
     doUnpacking(b,this->aSetOfAnchorPoints_var);
-    doUnpacking(b,this->copyOfASetOfAnchorPoints_var);
+    doUnpacking(b,this->anchorIndex);
 }
 
 IPvXAddress& AGF::getOriginatorAddress()
@@ -987,19 +987,14 @@ void AGF::setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints)
     this->aSetOfAnchorPoints_var = aSetOfAnchorPoints;
 }
 
-void AGF::makeACopy()
+int AGF::getAnchorIndex()
 {
-    copyOfASetOfAnchorPoints_var = aSetOfAnchorPoints_var;
+    return this->anchorIndex;
 }
 
-std::vector<anchor> AGF::getCopyOfASetOfAnchorPoints()
+void AGF::setAnchorIndex(int anchorIndex)
 {
-    return copyOfASetOfAnchorPoints_var;
-}
-
-void AGF::setCopyOfASetOfAnchorPoints(std::vector<anchor> copyOfASetOfAnchorPoints)
-{
-    this->copyOfASetOfAnchorPoints_var = copyOfASetOfAnchorPoints;
+    this->anchorIndex = anchorIndex;
 }
 
 class AGFDescriptor : public cClassDescriptor
@@ -1093,7 +1088,7 @@ const char *AGFDescriptor::getFieldName(void *object, int field) const
         "destPosition",
         "destSpeed",
         "aSetOfAnchorPoints",
-        "copyOfASetOfAnchorPoints",
+        "anchorindex",
     };
     return (field>=0 && field<10) ? fieldNames[field] : NULL;
 }
@@ -1925,11 +1920,7 @@ void carPacket::copy(const carPacket& other)
     this->originatorAddress_var = other.originatorAddress_var;
     this->destinationAddress_var = other.destinationAddress_var;
     this->aSetOfAnchorPoints_var = other.aSetOfAnchorPoints_var;
-    this->copyOfASetOfAnchorPoints_var = other.copyOfASetOfAnchorPoints_var;
-}
-void carPacket::makeACopy()
-{
-    copyOfASetOfAnchorPoints_var = aSetOfAnchorPoints_var;
+    this->anchorIndex = other.anchorIndex;
 }
 void carPacket::parsimPack(cCommBuffer *b)
 {
@@ -1938,7 +1929,7 @@ void carPacket::parsimPack(cCommBuffer *b)
     doPacking(b,this->originatorAddress_var);
     doPacking(b,this->destinationAddress_var);
     doPacking(b,this->aSetOfAnchorPoints_var);
-    doPacking(b,this->copyOfASetOfAnchorPoints_var);
+    doPacking(b,this->anchorIndex);
 }
 
 void carPacket::parsimUnpack(cCommBuffer *b)
@@ -1948,7 +1939,7 @@ void carPacket::parsimUnpack(cCommBuffer *b)
     doUnpacking(b,this->originatorAddress_var);
     doUnpacking(b,this->destinationAddress_var);
     doUnpacking(b,this->aSetOfAnchorPoints_var);
-    doUnpacking(b,this->copyOfASetOfAnchorPoints_var);
+    doUnpacking(b,this->anchorIndex);
 }
 
 Coord& carPacket::getDestinationPosition()
@@ -1990,20 +1981,16 @@ void carPacket::setASetOfAnchorPoints(std::vector<anchor>& aSetOfAnchorPoints)
 {
     this->aSetOfAnchorPoints_var = aSetOfAnchorPoints;
 }
-void carPacket::PopUpAnchorPoints()
+
+int carPacket::getAnchorIndex()
 {
-    this->copyOfASetOfAnchorPoints_var.pop_back();
-}
-std::vector<anchor> carPacket::getCopyOfASetOfAnchorPoints()
-{
-    return copyOfASetOfAnchorPoints_var;
+    return this->anchorIndex;
 }
 
-void carPacket::setCopyOfASetOfAnchorPoints(std::vector<anchor>& copyOfASetOfAnchorPoints)
+void carPacket::setAnchorIndex(int anchorIndex)
 {
-    this->copyOfASetOfAnchorPoints_var = copyOfASetOfAnchorPoints;
+    this->anchorIndex = anchorIndex;
 }
-
 class carPacketDescriptor : public cClassDescriptor
 {
   public:

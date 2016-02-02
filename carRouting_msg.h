@@ -116,13 +116,14 @@ class INET_API PGB : public ::cPacket
     unsigned int pgbCounter_var;
     simtime_t travelTime_var;
     unsigned int numOfHops_var;
+    std::string  previousForwarderHostName;
     unsigned int averageNumOfNeighbors_var;
     unsigned int minimumNumOfNeighbors_var;
     Coord originatorPosition_var;
     Coord originatorSpeed_var;
     unsigned int seqNum_var;
     std::vector<anchor> aSetOfAnchorPoints_var;
-
+    double previousForwarderAngel;
   private:
     void copy(const PGB& other);
 
@@ -172,6 +173,10 @@ class INET_API PGB : public ::cPacket
     virtual void setSeqNum(unsigned int seqNum);
     virtual std::vector<anchor> getASetOfAnchorPoints() const;
     virtual void setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints);
+    virtual std::string& getPreviousForwarderHostName();
+    virtual void setPreviousForwarderHostName(std::string previousForwarderHostName);
+    virtual double& getPreviousForwarderAngel();
+    virtual void setPreviousForwarderAngel(double previousForwarderAngel);
 };
 
 inline void doPacking(cCommBuffer *b, PGB& obj) {obj.parsimPack(b);}
@@ -206,7 +211,6 @@ class INET_API AGF : public ::cPacket
     Coord destPosition_var;
     Coord destSpeed_var;
     std::vector<anchor> aSetOfAnchorPoints_var;
-    std::vector<anchor> copyOfASetOfAnchorPoints_var;
 
   private:
     void copy(const AGF& other);
@@ -223,6 +227,7 @@ class INET_API AGF : public ::cPacket
     virtual AGF *dup() const {return new AGF(*this);}
     virtual void parsimPack(cCommBuffer *b);
     virtual void parsimUnpack(cCommBuffer *b);
+    std::vector<anchor> copyOfASetOfAnchorPoints_var;
 
     // field getter/setter methods
     virtual IPvXAddress& getOriginatorAddress();
@@ -248,7 +253,7 @@ class INET_API AGF : public ::cPacket
     virtual std::vector<anchor> getASetOfAnchorPoints() const;
     virtual void setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints);
     virtual void makeACopy();
-    virtual std::vector<anchor> getCopyOfASetOfAnchorPoints() const;
+    virtual std::vector<anchor> getCopyOfASetOfAnchorPoints() ;
     virtual void setCopyOfASetOfAnchorPoints(std::vector<anchor> copyOfASetOfAnchorPoints);
 };
 
@@ -263,7 +268,6 @@ class INET_API carPacket : public ::cPacket
     IPvXAddress originatorAddress_var;
     IPvXAddress destinationAddress_var;
     std::vector<anchor> aSetOfAnchorPoints_var;
-    std::vector<anchor> copyOfASetOfAnchorPoints_var;
 
   private:
     void copy(const carPacket& other);
@@ -280,6 +284,7 @@ class INET_API carPacket : public ::cPacket
     virtual carPacket *dup() const {return new carPacket(*this);}
     virtual void parsimPack(cCommBuffer *b);
     virtual void parsimUnpack(cCommBuffer *b);
+    std::vector<anchor> copyOfASetOfAnchorPoints_var;
 
     // field getter/setter methods
     virtual Coord& getDestinationPosition();
@@ -291,10 +296,11 @@ class INET_API carPacket : public ::cPacket
     virtual IPvXAddress& getDestinationAddress();
     virtual const IPvXAddress& getDestinationAddress() const {return const_cast<carPacket*>(this)->getDestinationAddress();}
     virtual void setDestinationAddress(const IPvXAddress& destinationAddress);
-    virtual std::vector<anchor> getASetOfAnchorPoints() const;
-    virtual void setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints);
-    virtual std::vector<anchor> getCopyOfASetOfAnchorPoints() const;
-    virtual void setCopyOfASetOfAnchorPoints(std::vector<anchor> copyOfASetOfAnchorPoints);
+    virtual std::vector<anchor> getASetOfAnchorPoints() ;
+    virtual void setASetOfAnchorPoints(std::vector<anchor>& aSetOfAnchorPoints);
+    virtual void PopUpAnchorPoints();
+    virtual std::vector<anchor> getCopyOfASetOfAnchorPoints() ;
+    virtual void setCopyOfASetOfAnchorPoints(std::vector<anchor>& copyOfASetOfAnchorPoints);
     virtual void makeACopy();
 
 };

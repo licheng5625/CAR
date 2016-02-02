@@ -34,6 +34,10 @@ class INET_API anchor : public ::cObject
     Coord speedOfPreviousForwarder_var;
     Coord speedOfCurrentNode_var;
     Coord position_var;
+    std::string  PreviousForwarderHostName;
+    std::string  CurrentHostName;
+    double currentForwarderAngel;
+    double previousForwarderAngel;
 
   private:
     void copy(const anchor& other);
@@ -65,5 +69,13 @@ class INET_API anchor : public ::cObject
     virtual Coord& getPosition();
     virtual const Coord& getPosition() const {return const_cast<anchor*>(this)->getPosition();}
     virtual void setPosition(const Coord& position);
+    virtual std::string& getPreviousForwarderHostName();
+    virtual void setPreviousForwarderHostName(std::string& PreviousForwarderHostName);
+    virtual std::string& getCurrentHostName();
+    virtual void setCurrentHostName(std::string& CurrentHostName);
+    virtual double& getPreviousForwarderAngel();
+    virtual void setPreviousForwarderAngel(double& previousForwarderAngel);
+    virtual double& getCurrentForwarderAngel();
+    virtual void setCurrentForwarderAngel(double& currentForwarderAngel);
 };
 #endif /* RBVTRPACKET_H_ */

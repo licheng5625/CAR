@@ -373,6 +373,8 @@ void PGB::copy(const PGB& other)
     this->originatorSpeed_var = other.originatorSpeed_var;
     this->seqNum_var = other.seqNum_var;
     this->aSetOfAnchorPoints_var = other.aSetOfAnchorPoints_var;
+    this->previousForwarderHostName = other.previousForwarderHostName;
+    this->previousForwarderAngel = other.previousForwarderAngel;
 }
 
 void PGB::parsimPack(cCommBuffer *b)
@@ -391,6 +393,8 @@ void PGB::parsimPack(cCommBuffer *b)
     doPacking(b,this->originatorSpeed_var);
     doPacking(b,this->seqNum_var);
     doPacking(b,this->aSetOfAnchorPoints_var);
+    doPacking(b,this->previousForwarderHostName);
+    doPacking(b,this->previousForwarderAngel);
 }
 
 void PGB::parsimUnpack(cCommBuffer *b)
@@ -409,6 +413,8 @@ void PGB::parsimUnpack(cCommBuffer *b)
     doUnpacking(b,this->originatorSpeed_var);
     doUnpacking(b,this->seqNum_var);
     doUnpacking(b,this->aSetOfAnchorPoints_var);
+    doUnpacking(b,this->previousForwarderHostName);
+    doUnpacking(b,this->previousForwarderAngel);
 }
 
 IPvXAddress& PGB::getOriginatorAddress()
@@ -540,13 +546,28 @@ void PGB::setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints)
 {
     this->aSetOfAnchorPoints_var = aSetOfAnchorPoints;
 }
+std::string& PGB::getPreviousForwarderHostName()
+{
+    return this->previousForwarderHostName;
+}
 
+void PGB::setPreviousForwarderHostName(std::string previousForwarderHostName)
+{
+    this->previousForwarderHostName = previousForwarderHostName;
+}
+double& PGB::getPreviousForwarderAngel()
+{
+    return previousForwarderAngel;
+}
+void PGB::setPreviousForwarderAngel(double previousForwarderAngel)
+{
+    this->previousForwarderAngel=previousForwarderAngel;
+}
 class PGBDescriptor : public cClassDescriptor
 {
   public:
     PGBDescriptor();
     virtual ~PGBDescriptor();
-
     virtual bool doesSupport(cObject *obj) const;
     virtual const char *getProperty(const char *propertyname) const;
     virtual int getFieldCount(void *object) const;
@@ -971,7 +992,7 @@ void AGF::makeACopy()
     copyOfASetOfAnchorPoints_var = aSetOfAnchorPoints_var;
 }
 
-std::vector<anchor> AGF::getCopyOfASetOfAnchorPoints() const
+std::vector<anchor> AGF::getCopyOfASetOfAnchorPoints()
 {
     return copyOfASetOfAnchorPoints_var;
 }
@@ -1960,22 +1981,25 @@ void carPacket::setDestinationAddress(const IPvXAddress& destinationAddress)
     this->destinationAddress_var = destinationAddress;
 }
 
-std::vector<anchor> carPacket::getASetOfAnchorPoints() const
+std::vector<anchor> carPacket::getASetOfAnchorPoints()
 {
     return aSetOfAnchorPoints_var;
 }
 
-void carPacket::setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints)
+void carPacket::setASetOfAnchorPoints(std::vector<anchor>& aSetOfAnchorPoints)
 {
     this->aSetOfAnchorPoints_var = aSetOfAnchorPoints;
 }
-
-std::vector<anchor> carPacket::getCopyOfASetOfAnchorPoints() const
+void carPacket::PopUpAnchorPoints()
+{
+    this->copyOfASetOfAnchorPoints_var.pop_back();
+}
+std::vector<anchor> carPacket::getCopyOfASetOfAnchorPoints()
 {
     return copyOfASetOfAnchorPoints_var;
 }
 
-void carPacket::setCopyOfASetOfAnchorPoints(std::vector<anchor> copyOfASetOfAnchorPoints)
+void carPacket::setCopyOfASetOfAnchorPoints(std::vector<anchor>& copyOfASetOfAnchorPoints)
 {
     this->copyOfASetOfAnchorPoints_var = copyOfASetOfAnchorPoints;
 }

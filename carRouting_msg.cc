@@ -1873,4 +1873,321 @@ void *trGuardDescriptor::getFieldStructPointer(void *object, int field, int i) c
     }
 }
 
+Register_Class(carPacket);
+
+carPacket::carPacket(const char *name, int kind) : ::cPacket(name,kind)
+{
+    //this->aSetOfAnchorPoints_var = 0;
+   // this->copyOfASetOfAnchorPoints_var = 0;
+}
+
+carPacket::carPacket(const carPacket& other) : ::cPacket(other)
+{
+    copy(other);
+}
+
+carPacket::~carPacket()
+{
+}
+
+carPacket& carPacket::operator=(const carPacket& other)
+{
+    if (this==&other) return *this;
+    ::cPacket::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void carPacket::copy(const carPacket& other)
+{
+    this->destinationPosition_var = other.destinationPosition_var;
+    this->originatorAddress_var = other.originatorAddress_var;
+    this->destinationAddress_var = other.destinationAddress_var;
+    this->aSetOfAnchorPoints_var = other.aSetOfAnchorPoints_var;
+    this->copyOfASetOfAnchorPoints_var = other.copyOfASetOfAnchorPoints_var;
+}
+void carPacket::makeACopy()
+{
+    copyOfASetOfAnchorPoints_var = aSetOfAnchorPoints_var;
+}
+void carPacket::parsimPack(cCommBuffer *b)
+{
+    ::cPacket::parsimPack(b);
+    doPacking(b,this->destinationPosition_var);
+    doPacking(b,this->originatorAddress_var);
+    doPacking(b,this->destinationAddress_var);
+    doPacking(b,this->aSetOfAnchorPoints_var);
+    doPacking(b,this->copyOfASetOfAnchorPoints_var);
+}
+
+void carPacket::parsimUnpack(cCommBuffer *b)
+{
+    ::cPacket::parsimUnpack(b);
+    doUnpacking(b,this->destinationPosition_var);
+    doUnpacking(b,this->originatorAddress_var);
+    doUnpacking(b,this->destinationAddress_var);
+    doUnpacking(b,this->aSetOfAnchorPoints_var);
+    doUnpacking(b,this->copyOfASetOfAnchorPoints_var);
+}
+
+Coord& carPacket::getDestinationPosition()
+{
+    return destinationPosition_var;
+}
+
+void carPacket::setDestinationPosition(const Coord& destinationPosition)
+{
+    this->destinationPosition_var = destinationPosition;
+}
+
+IPvXAddress& carPacket::getOriginatorAddress()
+{
+    return originatorAddress_var;
+}
+
+void carPacket::setOriginatorAddress(const IPvXAddress& originatorAddress)
+{
+    this->originatorAddress_var = originatorAddress;
+}
+
+IPvXAddress& carPacket::getDestinationAddress()
+{
+    return destinationAddress_var;
+}
+
+void carPacket::setDestinationAddress(const IPvXAddress& destinationAddress)
+{
+    this->destinationAddress_var = destinationAddress;
+}
+
+std::vector<anchor> carPacket::getASetOfAnchorPoints() const
+{
+    return aSetOfAnchorPoints_var;
+}
+
+void carPacket::setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints)
+{
+    this->aSetOfAnchorPoints_var = aSetOfAnchorPoints;
+}
+
+std::vector<anchor> carPacket::getCopyOfASetOfAnchorPoints() const
+{
+    return copyOfASetOfAnchorPoints_var;
+}
+
+void carPacket::setCopyOfASetOfAnchorPoints(std::vector<anchor> copyOfASetOfAnchorPoints)
+{
+    this->copyOfASetOfAnchorPoints_var = copyOfASetOfAnchorPoints;
+}
+
+class carPacketDescriptor : public cClassDescriptor
+{
+  public:
+    carPacketDescriptor();
+    virtual ~carPacketDescriptor();
+
+    virtual bool doesSupport(cObject *obj) const;
+    virtual const char *getProperty(const char *propertyname) const;
+    virtual int getFieldCount(void *object) const;
+    virtual const char *getFieldName(void *object, int field) const;
+    virtual int findField(void *object, const char *fieldName) const;
+    virtual unsigned int getFieldTypeFlags(void *object, int field) const;
+    virtual const char *getFieldTypeString(void *object, int field) const;
+    virtual const char *getFieldProperty(void *object, int field, const char *propertyname) const;
+    virtual int getArraySize(void *object, int field) const;
+
+    virtual std::string getFieldAsString(void *object, int field, int i) const;
+    virtual bool setFieldAsString(void *object, int field, int i, const char *value) const;
+
+    virtual const char *getFieldStructName(void *object, int field) const;
+    virtual void *getFieldStructPointer(void *object, int field, int i) const;
+};
+
+Register_ClassDescriptor(carPacketDescriptor);
+
+carPacketDescriptor::carPacketDescriptor() : cClassDescriptor("carPacket", "cPacket")
+{
+}
+
+carPacketDescriptor::~carPacketDescriptor()
+{
+}
+
+bool carPacketDescriptor::doesSupport(cObject *obj) const
+{
+    return dynamic_cast<carPacket *>(obj)!=NULL;
+}
+
+const char *carPacketDescriptor::getProperty(const char *propertyname) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? basedesc->getProperty(propertyname) : NULL;
+}
+
+int carPacketDescriptor::getFieldCount(void *object) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? 5+basedesc->getFieldCount(object) : 5;
+}
+
+unsigned int carPacketDescriptor::getFieldTypeFlags(void *object, int field) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getFieldTypeFlags(object, field);
+        field -= basedesc->getFieldCount(object);
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISCOMPOUND,
+        FD_ISCOMPOUND,
+        FD_ISCOMPOUND,
+        FD_ISEDITABLE,
+        FD_ISEDITABLE,
+    };
+    return (field>=0 && field<5) ? fieldTypeFlags[field] : 0;
+}
+
+const char *carPacketDescriptor::getFieldName(void *object, int field) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getFieldName(object, field);
+        field -= basedesc->getFieldCount(object);
+    }
+    static const char *fieldNames[] = {
+        "destinationPosition",
+        "originatorAddress",
+        "destinationAddress",
+        "aSetOfAnchorPoints",
+        "copyOfASetOfAnchorPoints",
+    };
+    return (field>=0 && field<5) ? fieldNames[field] : NULL;
+}
+
+int carPacketDescriptor::findField(void *object, const char *fieldName) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    int base = basedesc ? basedesc->getFieldCount(object) : 0;
+    if (fieldName[0]=='d' && strcmp(fieldName, "destinationPosition")==0) return base+0;
+    if (fieldName[0]=='o' && strcmp(fieldName, "originatorAddress")==0) return base+1;
+    if (fieldName[0]=='d' && strcmp(fieldName, "destinationAddress")==0) return base+2;
+    if (fieldName[0]=='a' && strcmp(fieldName, "aSetOfAnchorPoints")==0) return base+3;
+    if (fieldName[0]=='c' && strcmp(fieldName, "copyOfASetOfAnchorPoints")==0) return base+4;
+    return basedesc ? basedesc->findField(object, fieldName) : -1;
+}
+
+const char *carPacketDescriptor::getFieldTypeString(void *object, int field) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getFieldTypeString(object, field);
+        field -= basedesc->getFieldCount(object);
+    }
+    static const char *fieldTypeStrings[] = {
+        "Coord",
+        "IPvXAddress",
+        "IPvXAddress",
+        "unsigned int",
+        "unsigned int",
+    };
+    return (field>=0 && field<5) ? fieldTypeStrings[field] : NULL;
+}
+
+const char *carPacketDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getFieldProperty(object, field, propertyname);
+        field -= basedesc->getFieldCount(object);
+    }
+    switch (field) {
+        default: return NULL;
+    }
+}
+
+int carPacketDescriptor::getArraySize(void *object, int field) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getArraySize(object, field);
+        field -= basedesc->getFieldCount(object);
+    }
+    carPacket *pp = (carPacket *)object; (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+std::string carPacketDescriptor::getFieldAsString(void *object, int field, int i) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getFieldAsString(object,field,i);
+        field -= basedesc->getFieldCount(object);
+    }
+    carPacket *pp = (carPacket *)object; (void)pp;
+    switch (field) {
+        case 0: {std::stringstream out; out << pp->getDestinationPosition(); return out.str();}
+        case 1: {std::stringstream out; out << pp->getOriginatorAddress(); return out.str();}
+        case 2: {std::stringstream out; out << pp->getDestinationAddress(); return out.str();}
+       // case 3: return ulong2string(pp->getASetOfAnchorPoints());
+       // case 4: return ulong2string(pp->getCopyOfASetOfAnchorPoints());
+        default: return "";
+    }
+}
+
+bool carPacketDescriptor::setFieldAsString(void *object, int field, int i, const char *value) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->setFieldAsString(object,field,i,value);
+        field -= basedesc->getFieldCount(object);
+    }
+    carPacket *pp = (carPacket *)object; (void)pp;
+    switch (field) {
+       // case 3: pp->setASetOfAnchorPoints(string2ulong(value)); return true;
+       // case 4: pp->setCopyOfASetOfAnchorPoints(string2ulong(value)); return true;
+        default: return false;
+    }
+}
+
+const char *carPacketDescriptor::getFieldStructName(void *object, int field) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getFieldStructName(object, field);
+        field -= basedesc->getFieldCount(object);
+    }
+    switch (field) {
+        case 0: return opp_typename(typeid(Coord));
+        case 1: return opp_typename(typeid(IPvXAddress));
+        case 2: return opp_typename(typeid(IPvXAddress));
+        default: return NULL;
+    };
+}
+
+void *carPacketDescriptor::getFieldStructPointer(void *object, int field, int i) const
+{
+    cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount(object))
+            return basedesc->getFieldStructPointer(object, field, i);
+        field -= basedesc->getFieldCount(object);
+    }
+    carPacket *pp = (carPacket *)object; (void)pp;
+    switch (field) {
+        case 0: return (void *)(&pp->getDestinationPosition()); break;
+        case 1: return (void *)(&pp->getOriginatorAddress()); break;
+        case 2: return (void *)(&pp->getDestinationAddress()); break;
+        default: return NULL;
+    }
+}
 

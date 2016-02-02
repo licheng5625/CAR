@@ -42,8 +42,9 @@ protected:
     int seqNumOfPGB;
     // communication Range
     double communicationRange;
-    std::vector<anchor> aSetOfAnchorPoints;
     std::map < IPvXAddress, std::vector<std::pair < simtime_t,int > > > PGBTable;
+    std::map < IPvXAddress, std::vector<anchor> > AnchorTable;
+
     double alpha;
 
     PositionTableforCar neighborPositionTable;
@@ -73,9 +74,9 @@ private:
     void startRouteDiscovery(const IPv4Address & destAddr);
     PGB * createPGB(const IPvXAddress & destAddress);
     AGF * createAGF(PGB * pgbPacket);
+    carPacket * createDataPacket(const IPvXAddress & destAddress,cPacket * datagram);
     void  sendPGB(PGB * pgbPacket, double delay);
     void sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay);
-    std::vector<anchor> addNewOneToSetOfAnchorPoints(anchor * anchorPoint);
     Coord caculateTheCoordOfTheAnchor(Coord position1, Coord position2);
     anchor * addAsAnAnchor(Coord speed1, Coord speed2, Coord position1, Coord position2);
     bool isSeenPGB(IPvXAddress ipadd, int seqnum);
@@ -83,6 +84,7 @@ private:
     void receiveAGF(AGF * agfPacket);
     IPvXAddress findReverseNextHop(std::vector<anchor>& reverseRoute);
     double getVectorAngle(Coord vector);
+    void completeRouteDiscovery(const IPv4Address & destAddr);
 
  };
 

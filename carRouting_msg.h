@@ -255,6 +255,52 @@ class INET_API AGF : public ::cPacket
 inline void doPacking(cCommBuffer *b, AGF& obj) {obj.parsimPack(b);}
 inline void doUnpacking(cCommBuffer *b, AGF& obj) {obj.parsimUnpack(b);}
 
+
+class INET_API carPacket : public ::cPacket
+{
+  protected:
+    Coord destinationPosition_var;
+    IPvXAddress originatorAddress_var;
+    IPvXAddress destinationAddress_var;
+    std::vector<anchor> aSetOfAnchorPoints_var;
+    std::vector<anchor> copyOfASetOfAnchorPoints_var;
+
+  private:
+    void copy(const carPacket& other);
+
+  protected:
+    // protected and unimplemented operator==(), to prevent accidental usage
+    bool operator==(const carPacket&);
+
+  public:
+    carPacket(const char *name=NULL, int kind=0);
+    carPacket(const carPacket& other);
+    virtual ~carPacket();
+    carPacket& operator=(const carPacket& other);
+    virtual carPacket *dup() const {return new carPacket(*this);}
+    virtual void parsimPack(cCommBuffer *b);
+    virtual void parsimUnpack(cCommBuffer *b);
+
+    // field getter/setter methods
+    virtual Coord& getDestinationPosition();
+    virtual const Coord& getDestinationPosition() const {return const_cast<carPacket*>(this)->getDestinationPosition();}
+    virtual void setDestinationPosition(const Coord& destinationPosition);
+    virtual IPvXAddress& getOriginatorAddress();
+    virtual const IPvXAddress& getOriginatorAddress() const {return const_cast<carPacket*>(this)->getOriginatorAddress();}
+    virtual void setOriginatorAddress(const IPvXAddress& originatorAddress);
+    virtual IPvXAddress& getDestinationAddress();
+    virtual const IPvXAddress& getDestinationAddress() const {return const_cast<carPacket*>(this)->getDestinationAddress();}
+    virtual void setDestinationAddress(const IPvXAddress& destinationAddress);
+    virtual std::vector<anchor> getASetOfAnchorPoints() const;
+    virtual void setASetOfAnchorPoints(std::vector<anchor> aSetOfAnchorPoints);
+    virtual std::vector<anchor> getCopyOfASetOfAnchorPoints() const;
+    virtual void setCopyOfASetOfAnchorPoints(std::vector<anchor> copyOfASetOfAnchorPoints);
+    virtual void makeACopy();
+
+};
+
+inline void doPacking(cCommBuffer *b, carPacket& obj) {obj.parsimPack(b);}
+inline void doUnpacking(cCommBuffer *b, carPacket& obj) {obj.parsimUnpack(b);}
 /**
  * Class generated from <tt>networklayer/routing/carRouting/carRouting.msg</tt> by opp_msgc.
  * <pre>

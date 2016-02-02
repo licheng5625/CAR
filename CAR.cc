@@ -87,17 +87,54 @@ INetfilter::IHook::Result CAR::datagramPreRoutingHook(IPv4Datagram * datagram, c
 INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop)
 {
     EV_LOG("datagramPostRoutingHook");
-       const IPv4Address & destination = datagram->getDestAddress();
+     const IPv4Address & destination = datagram->getDestAddress();
 
-       if (destination.isMulticast() || destination.isLimitedBroadcastAddress()|| routingTable->isLocalAddress(destination))
+      if (destination.isMulticast() || destination.isLimitedBroadcastAddress()|| routingTable->isLocalAddress(destination))
                   return ACCEPT;
        else{
-           return ACCEPT;
+           EV_LOG("get a carPacket0");
+           carPacket * datapacket= (dynamic_cast<carPacket *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()));
+          // carPacket * datapacket=dynamic_cast<carPacket *>( (dynamic_cast<UDPPacket *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()))->getEncapsulatedPacket());
+           if (datapacket)
+              {
+                  EV_LOG("get a carPacket");
+                  IPv4Address bestNextHopAddress=IPv4Address::LOOPBACK_ADDRESS;
+                  Coord nextReverseAnchorPosition = datapacket->getCopyOfASetOfAnchorPoints().back().getPosition();
+                  double bestDistance = ( getSelfPosition()-nextReverseAnchorPosition).length();
+                  std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
+                  for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
+                     {
+                         const IPvXAddress & neighborAddress = * it;
+                         Coord neighborPosition = neighborPositionTable.getPosition(neighborAddress);
+                         double distance = (neighborPosition-nextReverseAnchorPosition).length();
+                         if (distance < bestDistance) {
+                             bestDistance = distance;
+                             bestNextHopAddress = neighborAddress.get4();
+                         }
+                     }
+                     if(bestNextHopAddress!=IPv4Address::LOOPBACK_ADDRESS)
+                         {
+                            EV_LOG("get a carPacket2");
+                            if( bestDistance<20)
+                            {
+                                EV_LOG("get a carPacket3");
+                              datapacket->getCopyOfASetOfAnchorPoints().pop_back();
+                            }
+                            nextHop=bestNextHopAddress;
+                          }
+                     else
+                     {
+                         EV_LOG("get a carPacket4");
+                         DROP;
+                     }
+              }else
+              {
+                  EV_LOG("get a carPacket5");
+              }
+          }
+          return ACCEPT;
+   }
 
-       }
-       return ACCEPT;
-
-}
 INetfilter::IHook::Result CAR::datagramLocalOutHook(IPv4Datagram * datagram, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop) {
        EV_LOG("datagramLocalOutHook");
        Enter_Method("datagramLocalOutHook");
@@ -133,9 +170,20 @@ void CAR::startRouteDiscovery(const IPv4Address & destAddr)
 
 INetfilter::IHook::Result  CAR::datagramLocalInHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry)
 {
-    return ACCEPT;
-}
+    EV_LOG("datagramLocalInHook");
+     cPacket * networkPacket = dynamic_cast<cPacket *>(datagram);
+     carPacket * dataPacket = dynamic_cast<carPacket *>(networkPacket->getEncapsulatedPacket());
+        if (dataPacket) {
+            networkPacket->decapsulate();
+            //UDPPacket * updPacket =check_and_cast<UDPPacket*>(dataPacket);
 
+            UDPPacket * updPacket =check_and_cast<UDPPacket*>(dataPacket->decapsulate());
+            cout<<updPacket<<endl;
+            networkPacket->encapsulate(updPacket);
+            //delete dataPacket;
+        }
+        return ACCEPT;
+}
 void CAR::processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlInfo)
 {
     EV_LOG("processMessage "+string(ctrlPacket->getName()));
@@ -304,7 +352,17 @@ AGF * CAR::createAGF(PGB * pgbPacket)
 
     return agfPacket;
 }
-
+carPacket * CAR::createDataPacket(const IPvXAddress & destAddress,cPacket * datagram)
+{
+    std::string name=std::string("dataPacket_")+datagram->getName();
+    carPacket * dataPacket = new carPacket(name.c_str());
+    dataPacket->setOriginatorAddress(getSelfAddress());
+    dataPacket->setDestinationAddress(destAddress);
+    dataPacket->setASetOfAnchorPoints( AnchorTable[destAddress]);
+    dataPacket->makeACopy();
+    dataPacket->encapsulate(datagram);
+    return dataPacket;
+}
 void CAR::sendPGB(PGB * pgbPacket, double delay)
 {
     CAR_EV << "Sending PGB packet: address = " << pgbPacket->getOriginatorAddress()
@@ -341,19 +399,11 @@ Coord CAR::caculateTheCoordOfTheAnchor(Coord position1, Coord position2)
     double y1 = position1.y;
     double x2 = position2.x;
     double y2 = position2.y;
-    double x = x2;
-    double y = y2;
+    double x = (x2+x1)/2;
+    double y = (y1+y2)/2;
     return Coord(x, y, 0);
 }
 
-
-std::vector<anchor> CAR::addNewOneToSetOfAnchorPoints(anchor * anchorPoint)
-{
-    aSetOfAnchorPoints.push_back(* anchorPoint);
-    //std::cout<< aSetOfAnchorPoints.back().getPosition() << endl;
-    //std::cout<< aSetOfAnchorPoints.size() << endl;
-    return aSetOfAnchorPoints;
-}
 bool CAR::isSeenPGB(IPvXAddress ipadd, int seqnum)
 {
     if (PGBTable.count(ipadd) == 0 )
@@ -411,7 +461,13 @@ void CAR::receivePGB(PGB * pgbPacket)
                    std::vector<anchor> reverseRoute = agfPacket->getASetOfAnchorPoints();
                    IPvXAddress bestNextHopAddress = findReverseNextHop(reverseRoute);
                    agfPacket->setCopyOfASetOfAnchorPoints(reverseRoute);
-                   sendAGF(agfPacket, bestNextHopAddress.get4(), uniform(0, maxJitter).dbl());
+                   if(bestNextHopAddress!=IPv4Address::LOOPBACK_ADDRESS)
+                   {
+                       sendAGF(agfPacket, bestNextHopAddress.get4(), uniform(0, maxJitter).dbl());
+                   }else
+                   {
+                       EV_LOG ( "no next hop to reply PGB packet" );
+                   }
                }
             else
                 {
@@ -431,6 +487,7 @@ void CAR::receivePGB(PGB * pgbPacket)
                     double delta = angle1 - angle2;
                     if(delta < (-alpha) || delta >= alpha)
                         {
+                            EV_LOG ( "add anchor" );
                             anchor * newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, currentSpeed, thePositionOfPrreviousForwarder, currentPosition);
                             std::cout<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                             anchorSet.push_back(*newAnchorPoint);
@@ -454,27 +511,24 @@ void CAR::receiveAGF(AGF * agfPacket)
     if (getSelfAddress() == agfPacket->getOriginatorAddress())
     {
         EV_LOG ("The AGF Route Reply reaches the originator!!!");
+        AnchorTable[agfPacket->getDestAddress()]=agfPacket->getASetOfAnchorPoints();
        // routeDiscoveryIsFinished = true;
       //  routingTableCar routeInfo ;
       //  routeInfo.setRouteInfo(agfPacket->getASetOfAnchorPoints());
-      //  completeRouteDiscovery(agfPacket->getOriginatorAddress().get4());
+        completeRouteDiscovery(agfPacket->getDestAddress().get4());
     }
     else
     {
         std::cout << "agfPacket->getCopyOfASetOfAnchorPoints()   "<<agfPacket->getCopyOfASetOfAnchorPoints().size() <<endl;
-        IPv4Address bestNextHopAddress;
+        IPv4Address bestNextHopAddress=IPv4Address::LOOPBACK_ADDRESS;
         if (agfPacket->getCopyOfASetOfAnchorPoints().size()!=0)
         {
             Coord nextReverseAnchorPosition = agfPacket->getCopyOfASetOfAnchorPoints().back().getPosition();
-            std::vector<anchor> temVector = agfPacket->getCopyOfASetOfAnchorPoints();
 
-            //temVector.pop_back();
 
-            agfPacket->setCopyOfASetOfAnchorPoints(temVector);
-            IPvXAddress selfAddress = getSelfAddress();
+             IPvXAddress selfAddress = getSelfAddress();
             Coord selfPosition = getSelfPosition();
-            //Coord nextAnchorPosition = findNextAnchorPosition();
-            double bestDistance = (selfPosition-nextReverseAnchorPosition).length();
+             double bestDistance = (selfPosition-nextReverseAnchorPosition).length();
             std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
             std::cout << "neighborAddresses   "<<neighborAddresses.size() <<endl;
 
@@ -488,8 +542,18 @@ void CAR::receiveAGF(AGF * agfPacket)
                     bestNextHopAddress = neighborAddress.get4();
                 }
             }
+            if(bestDistance<20&&bestNextHopAddress!=IPv4Address::LOOPBACK_ADDRESS)
+                {
+                        agfPacket->getCopyOfASetOfAnchorPoints().pop_back();
+                 }
         }
-        sendAGF(agfPacket, bestNextHopAddress, uniform(0, maxJitter).dbl());
+        if(bestNextHopAddress!=IPv4Address::LOOPBACK_ADDRESS)
+          {
+            sendAGF(agfPacket, bestNextHopAddress, uniform(0, maxJitter).dbl());
+          }else
+          {
+              EV_LOG( "Can't find next hop droped" );
+          }
     }
 }
 IPvXAddress CAR::findReverseNextHop(std::vector<anchor>& reverseRoute)
@@ -499,11 +563,10 @@ IPvXAddress CAR::findReverseNextHop(std::vector<anchor>& reverseRoute)
     std::cout <<  reverseRoute.size()  << endl;
 
     IPvXAddress selfAddress = getSelfAddress();
-    IPvXAddress bestNextHopAddress;
+    IPvXAddress bestNextHopAddress=IPv4Address::LOOPBACK_ADDRESS;
     Coord selfPosition = getSelfPosition();
     anchor nextAnchorPoint = reverseRoute.back();
     Coord nextReverseAnchorPosition = nextAnchorPoint.getPosition();
-    reverseRoute.pop_back();
     double bestDistance = (selfPosition- nextReverseAnchorPosition).length();
     std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
     for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
@@ -516,6 +579,10 @@ IPvXAddress CAR::findReverseNextHop(std::vector<anchor>& reverseRoute)
             bestNextHopAddress = neighborAddress.get4();
         }
     }
+    if(bestDistance<20&&bestNextHopAddress!=IPv4Address::LOOPBACK_ADDRESS)
+    {
+        reverseRoute.pop_back();
+    }
     std::cout <<  bestNextHopAddress  << endl;
     return bestNextHopAddress;
 }
@@ -526,4 +593,21 @@ double CAR::getVectorAngle(Coord vector)
     if (angle < 0)
         angle += 2 * PI;
     return angle;
+}
+
+void CAR::completeRouteDiscovery(const IPv4Address & destAddr)
+{
+    CAR_EV << "Completing route discovery, originator " << getSelfAddress() << ", destination " << destAddr << endl;
+    std::multimap<IPvXAddress, IPv4Datagram *>::iterator lt = delayPacketlist.getlowerbound(destAddr);
+    std::multimap<IPvXAddress, IPv4Datagram *>::iterator ut = delayPacketlist.getupperbound(destAddr);
+    for (std::multimap<IPvXAddress, IPv4Datagram *>::iterator it = lt; it != ut; it++) {
+        IPv4Datagram *datagram = it->second;
+        CAR_EV << "Sending queued datagram: source " << datagram->getSrcAddress() << ", destination " << datagram->getDestAddress() << endl;
+        cPacket * networkPacket = dynamic_cast<cPacket *>(datagram);
+        carPacket *dataPacket= createDataPacket(datagram->getDestAddress(), networkPacket->decapsulate());
+        networkPacket->encapsulate(dataPacket);
+        networkProtocol->reinjectQueuedDatagram(const_cast<const IPv4Datagram *>(datagram));
+    }
+    // clear the multimap
+    delayPacketlist.removePacket(destAddr);
 }

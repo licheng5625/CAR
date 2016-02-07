@@ -30,6 +30,7 @@ void CAR::initialize( int stage){
         checkTime = 0;
         arrivalTime=0;
         seqNumOfPGB=0;
+        neardistence=60;
         beaconInterval = par("beaconInterval");
         communicationRange = par("communicationRange");
         neighborValidityInterval = par("neighborValidityInterval");         // maybe will not be used
@@ -106,9 +107,9 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                   double angle1 = adjustVectorAngle(aimanchor.getCurrentForwarderAngel())/ (2 * PI) * 360;
                   double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
                   double delta = angle1 - angle2;
-                 if( myDistance<50&&(delta > (-alpha) && delta <= alpha))
+                 if( myDistance<neardistence&&(delta > (-alpha) && delta <= alpha))
                      {
-                         EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(bestDistance)+" and in same line "+std::to_string(delta));
+                         EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(myDistance)+" and in same line "+std::to_string(delta));
                          datapacket->anchorIndex=datapacket->anchorIndex+1;
                          aimanchor=datapacket->getASetOfAnchorPoints()[datapacket->anchorIndex];
                          nextReverseAnchorPosition = aimanchor.getPosition();
@@ -116,7 +117,7 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                      }
                 else
                     {
-                        EV_LOG(" neighbors: "+globalPositionTable.getHostName(bestNextHopAddress)+" to far "+std::to_string(bestDistance)+" not in same line "+std::to_string(delta));
+                        EV_LOG(" neighbors: "+globalPositionTable.getHostName(bestNextHopAddress)+" to far "+std::to_string(myDistance)+" not in same line "+std::to_string(delta));
                     }
               std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
               for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
@@ -198,11 +199,16 @@ INetfilter::IHook::Result  CAR::datagramLocalInHook(IPv4Datagram * datagram, con
         if (dataPacket) {
             networkPacket->decapsulate();
             //UDPPacket * updPacket =check_and_cast<UDPPacket*>(dataPacket);
-
+            if(std::find(packetlist.begin(),packetlist.end(),dataPacket->getName())==packetlist.end())
+            {
             UDPPacket * updPacket =check_and_cast<UDPPacket*>(dataPacket->decapsulate());
             cout<<updPacket<<endl;
             networkPacket->encapsulate(updPacket);
-            //delete dataPacket;
+            packetlist.push_back(dataPacket->getName());
+            }else{
+             CAR_EV << "Already seen it DROP";
+            return DROP;
+            }
         }
         return ACCEPT;
 }
@@ -626,7 +632,7 @@ void CAR::receiveAGF(AGF * agfPacket)
             double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
             double delta = angle1 - angle2;
             double myDistance =(selfPosition-aimanchor.getPosition()).length();
-            if(index!=0&& myDistance<50&&(delta > (-alpha) && delta <= alpha))
+            if(index!=0&& myDistance<neardistence&&(delta > (-alpha) && delta <= alpha))
             {
                 EV_LOG("pop the last anchor");
                 EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(bestDistance)+" and in same line "+std::to_string(delta));
@@ -637,7 +643,7 @@ void CAR::receiveAGF(AGF * agfPacket)
             }
             else
             {
-                EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" to far "+std::to_string(bestDistance)+" not in same line "+std::to_string(delta));
+                EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" to far "+std::to_string(myDistance)+" not in same line "+std::to_string(delta));
             }
             for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
             {

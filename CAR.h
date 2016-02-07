@@ -44,9 +44,10 @@ protected:
     double communicationRange;
     std::map < IPvXAddress, std::vector<std::pair < simtime_t,int > > > PGBTable;
     std::map < IPvXAddress, std::vector<anchor> > AnchorTable;
-
+    std::vector<std::string> packetlist;
     double alpha;
     double alpha2;
+    double neardistence;
     PositionTableforCar neighborPositionTable;
     PositionTableforCar guardsTable;
 

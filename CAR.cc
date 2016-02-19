@@ -7,6 +7,7 @@
 
 #include <CAR/CAR.h>
 #define CAR_EV EV << "CAR at " << getHostName() << " "
+#define LOG_EV inFile <<"#"<<EventNumber()<<"  "<<simTime()<< " " << getHostName() << " "
 #include "TraCIMobility.h"
 #include "Radio80211aControlInfo_m.h"
 Define_Module(CAR);
@@ -39,7 +40,7 @@ void CAR::initialize( int stage){
       //  RUliftime= par("RUliftime");
         routingTable = check_and_cast<IRoutingTable *>(getModuleByPath(par("routingTableModule")));
         alpha = par("alpha");
-        alpha2 =0.314;
+        RouteInterface::protocalname="CAR";
         //reBoardcastRDTimer = new cMessage("ReBoardcastRDTimer");;
     }else{
     if (stage == 4)
@@ -104,10 +105,10 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                   EV_LOG("aim anchor is form "+aimanchor.getPreviousForwarderHostName()+"  "+aimanchor.getCurrentHostName());
                   double bestDistance = 10000;//( getSelfPosition()-nextReverseAnchorPosition).length();
                   double myDistance = ( getSelfPosition()-nextReverseAnchorPosition).length();
-                  double angle1 = adjustVectorAngle(aimanchor.getCurrentForwarderAngel())/ (2 * PI) * 360;
-                  double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
-                  double delta = angle1 - angle2;
-                 if( myDistance<neardistence&&(delta > (-alpha) && delta <= alpha))
+                //  double angle1 = adjustVectorAngle(aimanchor.getCurrentForwarderAngel())/ (2 * PI) * 360;
+                //  double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
+                  double delta;// = angle1 - angle2;
+                 if( myDistance<neardistence&&isParallel(aimanchor.getCurrentForwarderAngel(),getAngel(),alpha,delta))
                      {
                          EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(myDistance)+" and in same line "+std::to_string(delta));
                          datapacket->anchorIndex=datapacket->anchorIndex+1;
@@ -525,6 +526,7 @@ void CAR::receivePGB(PGB * pgbPacket)
         if (pgbPacket->getDestAddress() == getSelfAddress())
                {
                    EV_LOG ( "The PGB packet reaches its destination!!!" );
+                   LOG_EV<<"The PGB packet reaches its destination!!!"<<endl;
                    //double angle1 = adjustVectorAngle(previousForwarderAngel)/ (2 * PI) * 360;
                  //  double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
                    double delta;// = angle1 - angle2;
@@ -549,6 +551,7 @@ void CAR::receivePGB(PGB * pgbPacket)
                    for(int i=0;i<reverseRoute.size();i++)
                    {
                        EV_LOG ( "anchor from "+ reverseRoute[i].getPreviousForwarderHostName()+"  to  "+reverseRoute[i].getCurrentHostName());
+                       LOG_EV<<"anchor from "<< reverseRoute[i].getPreviousForwarderHostName()<<"  to  "+reverseRoute[i].getCurrentHostName()<<endl;
                    }
                    IPvXAddress bestNextHopAddress = findReverseNextHop(reverseRoute);
                    EV_LOG ( "selct nexthop "+globalPositionTable.getHostName(bestNextHopAddress));

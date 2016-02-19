@@ -33,7 +33,6 @@ class INET_API anchor : public ::cObject
     Coord positionOfCurrentNode_var;
     Coord speedOfPreviousForwarder_var;
     Coord speedOfCurrentNode_var;
-    Coord position_var;
     std::string  PreviousForwarderHostName;
     std::string  CurrentHostName;
     double currentForwarderAngel;
@@ -66,12 +65,15 @@ class INET_API anchor : public ::cObject
     virtual Coord& getSpeedOfCurrentNode();
     virtual const Coord& getSpeedOfCurrentNode() const {return const_cast<anchor*>(this)->getSpeedOfCurrentNode();}
     virtual void setSpeedOfCurrentNode(const Coord& speedOfCurrentNode);
-    virtual Coord& getPosition();
-    virtual const Coord& getPosition() const {return const_cast<anchor*>(this)->getPosition();}
-    virtual void setPosition(const Coord& position);
+    virtual Coord& getPreviousForwarderPosition();
+    virtual Coord& getCurrentNodePosition();
+   // virtual const Coord& getPosition() const {return const_cast<anchor*>(this)->getPosition();}
+    virtual void setPreviousForwarderPosition(const Coord& position);
+    virtual void setCurrentNodePosition(const Coord& position);
     virtual std::string& getPreviousForwarderHostName();
     virtual void setPreviousForwarderHostName(std::string& PreviousForwarderHostName);
     virtual std::string& getCurrentHostName();
+    virtual void setPosition(const Coord& forposition,const Coord& curposition);
     virtual void setCurrentHostName(std::string& CurrentHostName);
     virtual double& getPreviousForwarderAngel();
     virtual void setPreviousForwarderAngel(double& previousForwarderAngel);

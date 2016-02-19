@@ -46,7 +46,8 @@ void anchor::copy(const anchor& other)
     this->positionOfCurrentNode_var = other.positionOfCurrentNode_var;
     this->speedOfPreviousForwarder_var = other.speedOfPreviousForwarder_var;
     this->speedOfCurrentNode_var = other.speedOfCurrentNode_var;
-    this->position_var = other.position_var;
+    this->positionOfCurrentNode_var = other.positionOfCurrentNode_var;
+    this->positionOfPreviousForwarder_var = other.positionOfPreviousForwarder_var;
     this->CurrentHostName=other.CurrentHostName;
     this->PreviousForwarderHostName=other.PreviousForwarderHostName;
     this->currentForwarderAngel=other.currentForwarderAngel;
@@ -94,16 +95,27 @@ void anchor::setSpeedOfCurrentNode(const Coord& speedOfCurrentNode)
     this->speedOfCurrentNode_var = speedOfCurrentNode;
 }
 
-Coord& anchor::getPosition()
+Coord& anchor::getPreviousForwarderPosition()
 {
-    return position_var;
+    return positionOfPreviousForwarder_var;
 }
-
-void anchor::setPosition(const Coord& position)
+Coord& anchor::getCurrentNodePosition()
 {
-    this->position_var = position;
+    return positionOfCurrentNode_var;
 }
-
+void anchor::setPreviousForwarderPosition(const Coord& position)
+{
+    this->positionOfPreviousForwarder_var = position;
+}
+void anchor::setPosition(const Coord& forposition,const Coord& curposition)
+{
+    this->positionOfPreviousForwarder_var = forposition;
+    this->positionOfCurrentNode_var = curposition;
+}
+void anchor::setCurrentNodePosition(const Coord& position)
+{
+    this->positionOfCurrentNode_var = position;
+}
 std::string& anchor::getPreviousForwarderHostName()
 {
     return this->PreviousForwarderHostName;

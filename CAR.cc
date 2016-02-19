@@ -100,7 +100,7 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                   EV_LOG("get a carPacket"+std::string(datagram->getName()));
                   IPv4Address bestNextHopAddress=IPv4Address::LOOPBACK_ADDRESS;
                   anchor aimanchor =datapacket->getASetOfAnchorPoints()[datapacket->anchorIndex];
-                  Coord nextReverseAnchorPosition = aimanchor.getPosition();
+                  Coord nextReverseAnchorPosition = aimanchor.getCurrentNodePosition();
                   EV_LOG("aim anchor is form "+aimanchor.getPreviousForwarderHostName()+"  "+aimanchor.getCurrentHostName());
                   double bestDistance = 10000;//( getSelfPosition()-nextReverseAnchorPosition).length();
                   double myDistance = ( getSelfPosition()-nextReverseAnchorPosition).length();
@@ -112,7 +112,7 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                          EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(myDistance)+" and in same line "+std::to_string(delta));
                          datapacket->anchorIndex=datapacket->anchorIndex+1;
                          aimanchor=datapacket->getASetOfAnchorPoints()[datapacket->anchorIndex];
-                         nextReverseAnchorPosition = aimanchor.getPosition();
+                         nextReverseAnchorPosition = aimanchor.getCurrentNodePosition();
                          EV_LOG ( "new aim anchor from "+ aimanchor.getPreviousForwarderHostName()+"  to  "+aimanchor.getCurrentHostName());
                      }
                 else
@@ -395,7 +395,7 @@ AGF * CAR::createAGF(PGB * pgbPacket)
 }
 carPacket * CAR::createDataPacket(const IPvXAddress & destAddress,cPacket * datagram)
 {
-    std::string name=std::string("dataPacket_")+datagram->getName();
+    std::string name=std::string("dataPacket_")+datagram->getName()+"_"+getHostName();
     carPacket * dataPacket = new carPacket(name.c_str());
     dataPacket->setOriginatorAddress(getSelfAddress());
     dataPacket->setDestinationAddress(destAddress);
@@ -420,20 +420,20 @@ void CAR::sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay)
 /**** position ****/
 /******************/
 
-anchor * CAR::addAsAnAnchor(Coord speed1, Coord speed2, Coord position1, Coord position2,std::string preHostName,std::string CurrHostName, double preangel, double nextangel)
+anchor * CAR::addAsAnAnchor(Coord forspeed, Coord curspeed, Coord forposition, Coord curposition,std::string preHostName,std::string CurrHostName, double preangel, double nextangel)
 {
     EV_LOG ( "add anchor from "+ preHostName+"  to  "+CurrHostName);
     anchor * anchorPoint = new anchor();
-    anchorPoint->setPositionOfCurrentNode(position2);
-    anchorPoint->setPositionOfPreviousForwarder(position1);
-    anchorPoint->setSpeedOfCurrentNode(speed2);
-    anchorPoint->setSpeedOfPreviousForwarder(speed1);
+    anchorPoint->setPositionOfCurrentNode(curposition);
+    anchorPoint->setPositionOfPreviousForwarder(forposition);
+    anchorPoint->setSpeedOfCurrentNode(curspeed);
+    anchorPoint->setSpeedOfPreviousForwarder(forspeed);
     anchorPoint->setPreviousForwarderHostName(preHostName);
     anchorPoint->setCurrentHostName(CurrHostName);
     anchorPoint->setCurrentForwarderAngel(nextangel);
     anchorPoint->setPreviousForwarderAngel(preangel);
-    Coord position = caculateTheCoordOfTheAnchor(position1, position2);
-    anchorPoint->setPosition(position);
+    //Coord position = caculateTheCoordOfTheAnchor(position1, position2);
+    anchorPoint->setPosition(forposition,curposition);
     std::cout << "Next Anchor is : " << getHostName() << endl;
     return anchorPoint;
 }
@@ -447,8 +447,8 @@ anchor * CAR::addAsAnAnchor(Coord speed1, Coord position1,std::string preHostNam
     anchorPoint->setSpeedOfPreviousForwarder(speed1);
     anchorPoint->setPreviousForwarderHostName(preHostName);
     anchorPoint->setCurrentHostName(preHostName);
-    Coord position = caculateTheCoordOfTheAnchor(position1, position1);
-    anchorPoint->setPosition(position);
+   // Coord position = caculateTheCoordOfTheAnchor(position1, position1);
+    anchorPoint->setPosition(position1,position1);
     anchorPoint->setCurrentForwarderAngel(preangel);
     anchorPoint->setPreviousForwarderAngel(preangel);
     std::cout << "Next Anchor is : " << getHostName() << endl;
@@ -525,22 +525,21 @@ void CAR::receivePGB(PGB * pgbPacket)
         if (pgbPacket->getDestAddress() == getSelfAddress())
                {
                    EV_LOG ( "The PGB packet reaches its destination!!!" );
-                   double angle1 = adjustVectorAngle(previousForwarderAngel)/ (2 * PI) * 360;
-                   double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
-                   double delta = angle1 - angle2;
-                   if(delta < (-alpha) || delta >= alpha)
+                   //double angle1 = adjustVectorAngle(previousForwarderAngel)/ (2 * PI) * 360;
+                 //  double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
+                   double delta;// = angle1 - angle2;
+                   //delta=delat.cabs();
+                   if(isParallel(previousForwarderAngel,getAngel(),alpha,delta))
                        {
-                           cout<<theSpeedOfPreviousForwarder <<"   "<< angle1<<endl;
-                           CAR_EV<<theSpeedOfPreviousForwarder <<"   "<< angle1<<endl;
-                           cout<<currentSpeed <<"   "<< angle2<<endl;
-                           CAR_EV<<currentSpeed <<"   "<< angle2<<endl;
+                           cout<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
+                           CAR_EV<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
+                           cout<<currentSpeed <<"   "<< getAngel()<<endl;
+                           CAR_EV<<currentSpeed <<"   "<< getAngel()<<endl;
                            EV_LOG ( "add anchor with angel: " +std::to_string(delta));
                            anchor * newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, currentSpeed, thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,getAngel());
-                           std::cout<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                            anchorSet.push_back(*newAnchorPoint);
                            pgbPacket->setASetOfAnchorPoints(anchorSet);
-                           std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "
-                                   << pgbPacket->getASetOfAnchorPoints().size()<< endl;
+                         //  std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                        }else
                        {
                            EV_LOG ( "don't add anchor with angel: " +std::to_string(delta));
@@ -571,22 +570,21 @@ void CAR::receivePGB(PGB * pgbPacket)
                     pgbPacket->setNumOfHops(pgbPacket->getNumOfHops() + 1);
                     pgbPacket->setPreviousForwarderHostName(getHostName());
                     pgbPacket->setPreviousForwarderAngel(getAngel());
-                    double angle1 = adjustVectorAngle(previousForwarderAngel)/ (2 * PI) * 360;
-                    double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
-                    double delta = angle1 - angle2;
-                    if(delta < (-alpha) || delta >= alpha)
+                   // double angle1 = adjustVectorAngle(previousForwarderAngel)/ (2 * PI) * 360;
+                    //double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
+                    double delta;// = angle1 - angle2;
+                    if(isParallel(previousForwarderAngel,getAngel(),alpha,delta) )
                         {
-                            cout<<theSpeedOfPreviousForwarder <<"   "<< angle1<<endl;
-                            CAR_EV<<theSpeedOfPreviousForwarder <<"   "<< angle1<<endl;
-                            cout<<currentSpeed <<"   "<< angle2<<endl;
-                            CAR_EV<<currentSpeed <<"   "<< angle2<<endl;
+                            cout<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
+                            CAR_EV<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
+                            cout<<currentSpeed <<"   "<< getAngel()<<endl;
+                            CAR_EV<<currentSpeed <<"   "<< getAngel()<<endl;
                             EV_LOG ( "add anchor with angel: " +std::to_string(delta));
                             anchor * newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, currentSpeed, thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,getAngel());
                             std::cout<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                             anchorSet.push_back(*newAnchorPoint);
                             pgbPacket->setASetOfAnchorPoints(anchorSet);
-                            std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "
-                                    << pgbPacket->getASetOfAnchorPoints().size()<< endl;
+                          //  std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                         }else
                         {
                             EV_LOG ( "don't add anchor with angel: " +std::to_string(delta));
@@ -626,30 +624,34 @@ void CAR::receiveAGF(AGF * agfPacket)
             std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
             std::cout << "neighborAddresses   "<<neighborAddresses.size() <<endl;
             anchor aimanchor =agfPacket->getASetOfAnchorPoints()[index];
-            Coord nextReverseAnchorPosition = aimanchor.getPosition();
+            Coord nextReverseAnchorPosition = aimanchor.getPreviousForwarderPosition();
             EV_LOG("aim anchor is form "+aimanchor.getPreviousForwarderHostName()+"  "+aimanchor.getCurrentHostName());
-            double angle1 = adjustVectorAngle(aimanchor.getPreviousForwarderAngel())/ (2 * PI) * 360;
-            double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
-            double delta = angle1 - angle2;
-            double myDistance =(selfPosition-aimanchor.getPosition()).length();
-            if(index!=0&& myDistance<neardistence&&(delta > (-alpha) && delta <= alpha))
+            //double angle1 = adjustVectorAngle(aimanchor.getPreviousForwarderAngel())/ (2 * PI) * 360;
+           // double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
+            double delta;// = angle1 - angle2;
+            double myDistance =(selfPosition-aimanchor.getPreviousForwarderPosition()).length();
+            if(index!=0&& myDistance<neardistence&&isParallel(aimanchor.getPreviousForwarderAngel(),getAngel(),alpha,delta))
             {
                 EV_LOG("pop the last anchor");
-                EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(bestDistance)+" and in same line "+std::to_string(delta));
+                //EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(bestDistance)+" and in same line "+std::to_string(delta));
                 agfPacket->anchorIndex=agfPacket->anchorIndex-1;
                 aimanchor=agfPacket->getASetOfAnchorPoints()[agfPacket->anchorIndex];
-                nextReverseAnchorPosition = aimanchor.getPosition();
+                nextReverseAnchorPosition = aimanchor.getPreviousForwarderPosition();
                 EV_LOG ( "new aim anchor from "+ aimanchor.getPreviousForwarderHostName()+"  to  "+aimanchor.getCurrentHostName());
             }
             else
             {
-                EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" to far "+std::to_string(myDistance)+" not in same line "+std::to_string(delta));
+                EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" too far "+std::to_string(myDistance)+" not in same line "+std::to_string(delta));
             }
+            EV_LOG("anchor position is x= "+std::to_string(nextReverseAnchorPosition.x)+" y= "+std::to_string(nextReverseAnchorPosition.y));
+            EV_LOG("anchor pre-position is "+aimanchor.getPreviousForwarderHostName()+" x= "+std::to_string(aimanchor.getPositionOfPreviousForwarder().x)+" y= "+std::to_string(aimanchor.getPositionOfPreviousForwarder().y));
+            EV_LOG("anchor cur-position is "+aimanchor.getCurrentHostName()+" x= "+std::to_string(aimanchor.getPositionOfCurrentNode().x)+" y= "+std::to_string(aimanchor.getPositionOfCurrentNode().y));
             for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
             {
                 const IPvXAddress & neighborAddress = * it;
                 Coord neighborPosition = neighborPositionTable.getPosition(neighborAddress);
                 double distance = (neighborPosition-nextReverseAnchorPosition).length();
+                EV_LOG("I have neighbors: "+globalPositionTable.getHostName(*it)+" position is x= "+std::to_string(neighborPosition.x)+" y= "+std::to_string(neighborPosition.y)+" distence is "+std::to_string(distance));
                 if (distance < bestDistance) {
                     bestDistance = distance;
                     bestNextHopAddress = neighborAddress.get4();
@@ -666,6 +668,19 @@ void CAR::receiveAGF(AGF * agfPacket)
           }
     }
 }
+bool CAR::isParallel(double angle1,double angle2,double degree,double& diffdegree)
+{
+    double adjustedangle1 = adjustVectorAngle(angle1)/ (2 * PI) * 360;
+    double adjustedangle2 = adjustVectorAngle(angle2) / (2 * PI) * 360;
+    diffdegree = angle1 - angle2;
+    if(diffdegree<0)
+        diffdegree=-diffdegree;
+   if( diffdegree >= degree)
+   {
+       return false;
+   }
+   return true;
+}
 IPvXAddress CAR::findReverseNextHop(std::vector<anchor>& reverseRoute)
 {
     EV_LOG( "Finding the reverse next hop for the Routing" );
@@ -677,7 +692,7 @@ IPvXAddress CAR::findReverseNextHop(std::vector<anchor>& reverseRoute)
     Coord selfPosition = getSelfPosition();
     anchor nextAnchorPoint = reverseRoute.back();
     EV_LOG ( "need to reach anchor from "+ nextAnchorPoint.getPreviousForwarderHostName()+"  to  "+nextAnchorPoint.getCurrentHostName());
-    Coord nextReverseAnchorPosition = nextAnchorPoint.getPosition();
+    Coord nextReverseAnchorPosition = nextAnchorPoint.getCurrentNodePosition();
     double bestDistance = 10000;//(selfPosition- nextReverseAnchorPosition).length();
     std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
     for (std::vector<IPvXAddress>::iterator it = neighborAddresses.begin(); it !=neighborAddresses.end(); it++)
@@ -704,6 +719,10 @@ double CAR::adjustVectorAngle(double angle)
 {
     if (angle < 0)
         angle += 2 * PI;
+    if (angle > PI)
+         angle -= PI;
+    if (angle > PI/2)
+        angle=PI-angle;
     return angle;
 }
 void CAR::completeRouteDiscovery(const IPv4Address & destAddr)

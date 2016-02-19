@@ -85,6 +85,7 @@ private:
     void receivePGB(PGB * pgbPacket);
     void receiveAGF(AGF * agfPacket);
     IPvXAddress findReverseNextHop(std::vector<anchor>& reverseRoute);
+    bool isParallel(double angel1,double angel2,double degree,double& diffdegree);
     double getVectorAngle(Coord vector);
     double adjustVectorAngle(double angle);
     void completeRouteDiscovery(const IPv4Address & destAddr);

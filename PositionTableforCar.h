@@ -24,7 +24,7 @@
 #include "INETDefs.h"
 #include "IPvXAddress.h"
 #include "Coord.h"
-static double const NaN = 0.0 / 0.0;
+static double  NaN = 0.0 / 0.0;
 
 /**
  * This class provides a mapping between node addresses and their positions.
@@ -36,7 +36,7 @@ class CarInformation {
         Coord speed;
         bool Coordinator;
         simtime_t createTime;
-        CarInformation(simtime_t createTime=0,const std::string hostname ="",const Coord  position=Coord(NaN, NaN, NaN),const Coord speed=Coord(NaN, NaN, NaN))
+        CarInformation(simtime_t createTime=0, std::string hostname ="", Coord  position=Coord(NaN, NaN, NaN), Coord speed=Coord(NaN, NaN, NaN))
         {
             this->createTime=createTime;
             this->hostName=hostname;
@@ -44,7 +44,7 @@ class CarInformation {
             this->speed=speed;
         }
 };
-class INET_API PositionTableforCar {
+class PositionTableforCar {
     private:
         typedef std::map<IPvXAddress, CarInformation> AddressToPositionMap;
         AddressToPositionMap addressToPositionMap;
@@ -52,29 +52,29 @@ class INET_API PositionTableforCar {
     public:
         PositionTableforCar() { }
 
-        std::vector<IPvXAddress> getAddresses() const;
+        std::vector<IPvXAddress> getAddresses() ;
         int getLengthOfPositionTable();
 
-        bool hasPosition(const IPvXAddress & address) const;
-        Coord getPosition(const IPvXAddress & address) const;
-        void setPosition(const IPvXAddress & address, const Coord & position,const Coord & speed,const std::string hostname);
-        void setSpeed(const IPvXAddress & address, const Coord & speed);
-        Coord getSpeed(const IPvXAddress & address) const;
-        simtime_t getCreateTime(const IPvXAddress & address) ;
+        bool hasPosition( IPvXAddress  address) ;
+        Coord getPosition( IPvXAddress  address) ;
+        void setPosition( IPvXAddress  address,  Coord  position, Coord  speed, std::string hostname);
+        void setSpeed( IPvXAddress  address,  Coord  speed);
+        Coord getSpeed( IPvXAddress  address) ;
+        simtime_t getCreateTime( IPvXAddress  address) ;
 
-        void setHostName(const IPvXAddress & address, const std::string hostname);
-        std::string getHostName(const IPvXAddress & address) const;
+        void setHostName( IPvXAddress  address,  std::string hostname);
+        std::string getHostName( IPvXAddress  address) ;
 
-        void setIfCoordinator(const IPvXAddress & address, const bool & iscoordinator);
-        bool getIfCoordinator(const IPvXAddress & address) const;
+        void setIfCoordinator( IPvXAddress  address,  bool  iscoordinator);
+        bool getIfCoordinator( IPvXAddress  address) ;
 
 
-        void removePosition(const IPvXAddress & address);
+        void removePosition( IPvXAddress  address);
         void removeOldPositions(simtime_t timestamp);
 
         void clear();
 
-        simtime_t getOldestPosition() const;
+        simtime_t getOldestPosition() ;
 };
 
 

@@ -44,9 +44,9 @@ protected:
     double communicationRange;
     std::map < IPvXAddress, std::vector<std::pair < simtime_t,int > > > PGBTable;
     std::map < IPvXAddress, std::vector<anchor> > AnchorTable;
+    std::map <cMessage * ,AGF* > AGFTable;
     std::vector<std::string> packetlist;
     double alpha;
-    double alpha2;
     double neardistence;
     PositionTableforCar neighborPositionTable;
     PositionTableforCar guardsTable;
@@ -79,12 +79,13 @@ private:
     void  sendPGB(PGB * pgbPacket, double delay);
     void sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay);
     Coord caculateTheCoordOfTheAnchor(Coord position1, Coord position2);
-    anchor * addAsAnAnchor(Coord speed1, Coord speed2, Coord position1, Coord position2,std::string preHostName,std::string CurrHostName, double preangel, double nextangel);
-    anchor * addAsAnAnchor(Coord speed1, Coord position1,std::string preHostName,double preangel);
+    anchor  addAsAnAnchor(Coord speed1, Coord speed2, Coord position1, Coord position2,std::string preHostName,std::string CurrHostName, double preangel, double nextangel);
+    anchor  addAsAnAnchor(Coord speed1, Coord position1,std::string preHostName,double preangel);
     bool isSeenPGB(IPvXAddress ipadd, int seqnum);
     void receivePGB(PGB * pgbPacket);
     void receiveAGF(AGF * agfPacket);
-    IPvXAddress findReverseNextHop(std::vector<anchor>& reverseRoute);
+    void trysendAGF(AGF * agfPacket,cMessage* timer);
+    IPvXAddress findReverseNextHop(anchor reverseRoute,bool forwarding);
     bool isParallel(double angel1,double angel2,double degree,double& diffdegree);
     double getVectorAngle(Coord vector);
     double adjustVectorAngle(double angle);

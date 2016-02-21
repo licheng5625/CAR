@@ -33,14 +33,14 @@ simple CAR
        string networkProtocolModule = default("^.networkLayer.ip");
        string routingTableModule = default("^.routingTable");     
         string interfaces = default("*");
-        double maxJitter @unit("s") = default(1s);
+        double maxJitter @unit("s") = default(0.04s);
         double neighborValidityInterval @unit("s") = default(30s);
         int udpPort = default(269);
         double alpha @unit("degrees")= default(18degrees);
         double communicationRange @unit("m")= default(1000m);
         int stGuardTTL @unit("ms") = default(255ms);
         int trGuardTTL @unit("ms") = default(255ms);
-        double beaconInterval @unit("s") = default(0.5s);		
+        double beaconInterval @unit("s") = default(5s);		
     gates:
         input ipIn;
         output ipOut;

@@ -26,7 +26,7 @@
 #include "Coord.h"
 
 
-class INET_API anchor : public ::cObject
+class anchor
 {
   protected:
     Coord positionOfPreviousForwarder_var;
@@ -38,46 +38,45 @@ class INET_API anchor : public ::cObject
     double currentForwarderAngel;
     double previousForwarderAngel;
 
-  private:
-    void copy(const anchor& other);
+   private:
+     void copy(const anchor other);
 
-  protected:
+  //protected:
     // protected and unimplemented operator==(), to prevent accidental usage
-    bool operator==(const anchor&);
+   // bool operator==(const anchor);
 
   public:
     anchor();
-    anchor(const anchor& other);
-    virtual ~anchor();
-    anchor& operator=(const anchor& other);
+      ~anchor();
+   // anchor operator=(const anchor other);
 
 
     // field getter/setter methods
-    virtual Coord& getPositionOfPreviousForwarder();
-    virtual const Coord& getPositionOfPreviousForwarder() const {return const_cast<anchor*>(this)->getPositionOfPreviousForwarder();}
-    virtual void setPositionOfPreviousForwarder(const Coord& positionOfPreviousForwarder);
-    virtual Coord& getPositionOfCurrentNode();
-    virtual const Coord& getPositionOfCurrentNode() const {return const_cast<anchor*>(this)->getPositionOfCurrentNode();}
-    virtual void setPositionOfCurrentNode(const Coord& positionOfCurrentNode);
-    virtual Coord& getSpeedOfPreviousForwarder();
-    virtual const Coord& getSpeedOfPreviousForwarder() const {return const_cast<anchor*>(this)->getSpeedOfPreviousForwarder();}
-    virtual void setSpeedOfPreviousForwarder(const Coord& speedOfPreviousForwarder);
-    virtual Coord& getSpeedOfCurrentNode();
-    virtual const Coord& getSpeedOfCurrentNode() const {return const_cast<anchor*>(this)->getSpeedOfCurrentNode();}
-    virtual void setSpeedOfCurrentNode(const Coord& speedOfCurrentNode);
-    virtual Coord& getPreviousForwarderPosition();
-    virtual Coord& getCurrentNodePosition();
-   // virtual const Coord& getPosition() const {return const_cast<anchor*>(this)->getPosition();}
-    virtual void setPreviousForwarderPosition(const Coord& position);
-    virtual void setCurrentNodePosition(const Coord& position);
-    virtual std::string& getPreviousForwarderHostName();
-    virtual void setPreviousForwarderHostName(std::string& PreviousForwarderHostName);
-    virtual std::string& getCurrentHostName();
-    virtual void setPosition(const Coord& forposition,const Coord& curposition);
-    virtual void setCurrentHostName(std::string& CurrentHostName);
-    virtual double& getPreviousForwarderAngel();
-    virtual void setPreviousForwarderAngel(double& previousForwarderAngel);
-    virtual double& getCurrentForwarderAngel();
-    virtual void setCurrentForwarderAngel(double& currentForwarderAngel);
+     Coord getPositionOfPreviousForwarder();
+     //const Coord getPositionOfPreviousForwarder() const {return const_cast<anchor*>(this)->getPositionOfPreviousForwarder();}
+     void setPositionOfPreviousForwarder(const Coord positionOfPreviousForwarder);
+     Coord getPositionOfCurrentNode();
+     const Coord getPositionOfCurrentNode() const {return const_cast<anchor*>(this)->getPositionOfCurrentNode();}
+     void setPositionOfCurrentNode(const Coord positionOfCurrentNode);
+     Coord getSpeedOfPreviousForwarder();
+     const Coord getSpeedOfPreviousForwarder() const {return const_cast<anchor*>(this)->getSpeedOfPreviousForwarder();}
+     void setSpeedOfPreviousForwarder(const Coord speedOfPreviousForwarder);
+     Coord getSpeedOfCurrentNode();
+     const Coord getSpeedOfCurrentNode() const {return const_cast<anchor*>(this)->getSpeedOfCurrentNode();}
+     void setSpeedOfCurrentNode(const Coord speedOfCurrentNode);
+     Coord getPreviousForwarderPosition();
+     Coord getCurrentNodePosition();
+   //  const Coord getPosition() const {return const_cast<anchor*>(this)->getPosition();}
+     void setPreviousForwarderPosition(const Coord position);
+     void setCurrentNodePosition(const Coord position);
+     std::string getPreviousForwarderHostName();
+     void setPreviousForwarderHostName(std::string PreviousForwarderHostName);
+     std::string getCurrentHostName();
+     void setPosition(const Coord forposition,const Coord curposition);
+     void setCurrentHostName(std::string CurrentHostName);
+     double getPreviousForwarderAngel();
+     void setPreviousForwarderAngel(double previousForwarderAngel);
+     double getCurrentForwarderAngel();
+     void setCurrentForwarderAngel(double currentForwarderAngel);
 };
 #endif /* RBVTRPACKET_H_ */

@@ -19,28 +19,17 @@
 #include "anchor.h"
 
 
-anchor::anchor() : ::cObject()
+anchor::anchor()
 {
-}
-
-anchor::anchor(const anchor& other) : ::cObject(other)
-{
-    copy(other);
 }
 
 anchor::~anchor()
 {
 }
 
-anchor& anchor::operator=(const anchor& other)
-{
-    if (this==&other) return *this;
-    ::cObject::operator=(other);
-    copy(other);
-    return *this;
-}
 
-void anchor::copy(const anchor& other)
+
+void anchor::copy(const anchor other)
 {
     this->positionOfPreviousForwarder_var = other.positionOfPreviousForwarder_var;
     this->positionOfCurrentNode_var = other.positionOfCurrentNode_var;
@@ -51,104 +40,104 @@ void anchor::copy(const anchor& other)
     this->CurrentHostName=other.CurrentHostName;
     this->PreviousForwarderHostName=other.PreviousForwarderHostName;
     this->currentForwarderAngel=other.currentForwarderAngel;
-    this->currentForwarderAngel=other.currentForwarderAngel;
+    this->previousForwarderAngel=other.previousForwarderAngel;
 }
 
 
-Coord& anchor::getPositionOfPreviousForwarder()
+Coord anchor::getPositionOfPreviousForwarder()
 {
     return positionOfPreviousForwarder_var;
 }
 
-void anchor::setPositionOfPreviousForwarder(const Coord& positionOfPreviousForwarder)
+void anchor::setPositionOfPreviousForwarder(const Coord positionOfPreviousForwarder)
 {
     this->positionOfPreviousForwarder_var = positionOfPreviousForwarder;
 }
 
-Coord& anchor::getPositionOfCurrentNode()
+Coord anchor::getPositionOfCurrentNode()
 {
     return positionOfCurrentNode_var;
 }
 
-void anchor::setPositionOfCurrentNode(const Coord& positionOfCurrentNode)
+void anchor::setPositionOfCurrentNode(const Coord positionOfCurrentNode)
 {
     this->positionOfCurrentNode_var = positionOfCurrentNode;
 }
 
-Coord& anchor::getSpeedOfPreviousForwarder()
+Coord anchor::getSpeedOfPreviousForwarder()
 {
     return speedOfPreviousForwarder_var;
 }
 
-void anchor::setSpeedOfPreviousForwarder(const Coord& speedOfPreviousForwarder)
+void anchor::setSpeedOfPreviousForwarder(const Coord speedOfPreviousForwarder)
 {
     this->speedOfPreviousForwarder_var = speedOfPreviousForwarder;
 }
 
-Coord& anchor::getSpeedOfCurrentNode()
+Coord anchor::getSpeedOfCurrentNode()
 {
     return speedOfCurrentNode_var;
 }
 
-void anchor::setSpeedOfCurrentNode(const Coord& speedOfCurrentNode)
+void anchor::setSpeedOfCurrentNode(const Coord speedOfCurrentNode)
 {
     this->speedOfCurrentNode_var = speedOfCurrentNode;
 }
 
-Coord& anchor::getPreviousForwarderPosition()
+Coord anchor::getPreviousForwarderPosition()
 {
     return positionOfPreviousForwarder_var;
 }
-Coord& anchor::getCurrentNodePosition()
+Coord anchor::getCurrentNodePosition()
 {
     return positionOfCurrentNode_var;
 }
-void anchor::setPreviousForwarderPosition(const Coord& position)
+void anchor::setPreviousForwarderPosition(const Coord position)
 {
     this->positionOfPreviousForwarder_var = position;
 }
-void anchor::setPosition(const Coord& forposition,const Coord& curposition)
+void anchor::setPosition(const Coord forposition,const Coord curposition)
 {
     this->positionOfPreviousForwarder_var = forposition;
     this->positionOfCurrentNode_var = curposition;
 }
-void anchor::setCurrentNodePosition(const Coord& position)
+void anchor::setCurrentNodePosition(const Coord position)
 {
     this->positionOfCurrentNode_var = position;
 }
-std::string& anchor::getPreviousForwarderHostName()
+std::string anchor::getPreviousForwarderHostName()
 {
     return this->PreviousForwarderHostName;
 }
 
-void anchor::setPreviousForwarderHostName(std::string& PreviousForwarderHostName)
+void anchor::setPreviousForwarderHostName(std::string PreviousForwarderHostName)
 {
     this->PreviousForwarderHostName = PreviousForwarderHostName;
 }
 
-std::string& anchor::getCurrentHostName()
+std::string anchor::getCurrentHostName()
 {
     return this->CurrentHostName;
 }
 
-void anchor::setCurrentHostName(std::string& CurrentHostName)
+void anchor::setCurrentHostName(std::string CurrentHostName)
 {
     this->CurrentHostName = CurrentHostName;
 }
 
-double& anchor::getPreviousForwarderAngel()
+double anchor::getPreviousForwarderAngel()
 {
     return previousForwarderAngel;
 }
-void anchor::setPreviousForwarderAngel(double& previousForwarderAngel)
+void anchor::setPreviousForwarderAngel(double previousForwarderAngel)
 {
     this->previousForwarderAngel=previousForwarderAngel;
 }
-double& anchor::getCurrentForwarderAngel()
+double anchor::getCurrentForwarderAngel()
 {
     return currentForwarderAngel;
 }
-void anchor::setCurrentForwarderAngel(double& currentForwarderAngel)
+void anchor::setCurrentForwarderAngel(double currentForwarderAngel)
 {
     this->currentForwarderAngel=currentForwarderAngel;
 }

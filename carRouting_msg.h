@@ -45,13 +45,46 @@
  * }
  * </pre>
  */
+enum GuardType {
+    trGuardType,
+    stGuardType
+};
+class Guard
+{
+    public:
+        simtime_t GuardTTL_var;
+        Coord guardedPosition_var;
+        IPvXAddress activatorAddress_var;
+        double guardedRadius_var;
+        GuardType guardType;
+        int ID;
+        Guard();
+        Guard(int ID);
+        virtual ~Guard();
+        int  getID();
+        void  setID(int ID);
+        IPvXAddress getActivatorAddress();
+        void setActivatorAddress(IPvXAddress activatorAddress);
+        simtime_t getGuardTTL();
+        Coord getGuardedPosition();
+        void setGuardedPosition( Coord guardedPosition);
+        void setGuardTTL(simtime_t stGuardCounter);
+        double getGuardedRadius();
+        void setGuardedRadius(double guardedRadius);
+        GuardType getGuardType();
+        void setGuardType(GuardType GuardType);
+
+      // protected and unimplemented operator==(), to prevent accidental usage
+        bool operator==( Guard  guard);
+};
+
 class INET_API carBeacon : public ::cPacket
 {
   protected:
     IPvXAddress address_var;
     Coord speed_var;
     Coord position_var;
-
+    std::vector <Guard*>  ListOfguards_var;
   private:
     void copy(const carBeacon& other);
 
@@ -78,6 +111,8 @@ class INET_API carBeacon : public ::cPacket
     virtual Coord& getPosition();
     virtual const Coord& getPosition() const {return const_cast<carBeacon*>(this)->getPosition();}
     virtual void setPosition(const Coord& position);
+    virtual std::vector <Guard*> getListOfguards() ;
+    virtual void setListOfguards(std::vector <Guard*>  ListOfguards);
 };
 
 inline void doPacking(cCommBuffer *b, carBeacon& obj) {obj.parsimPack(b);}
@@ -264,10 +299,12 @@ class INET_API carPacket : public ::cPacket
 {
   protected:
     Coord destinationPosition_var;
+    Coord sourcePosition_var;
+    Coord destSpeed_var;
     IPvXAddress originatorAddress_var;
     IPvXAddress destinationAddress_var;
     std::vector<anchor> aSetOfAnchorPoints_var;
-
+    simtime_t travelTime_var;
   private:
     void copy(const carPacket& other);
 
@@ -290,6 +327,10 @@ class INET_API carPacket : public ::cPacket
     virtual const Coord& getDestinationPosition() const {return const_cast<carPacket*>(this)->getDestinationPosition();}
     virtual void setDestinationPosition(const Coord& destinationPosition);
     virtual IPvXAddress& getOriginatorAddress();
+    Coord& getsourcePosition();
+    virtual simtime_t getTravelTime() const;
+    virtual void setTravelTime(simtime_t travelTime);
+    void setsourcePosition(const Coord& sourcePosition);
     virtual const IPvXAddress& getOriginatorAddress() const {return const_cast<carPacket*>(this)->getOriginatorAddress();}
     virtual void setOriginatorAddress(const IPvXAddress& originatorAddress);
     virtual IPvXAddress& getDestinationAddress();
@@ -299,6 +340,9 @@ class INET_API carPacket : public ::cPacket
     virtual void setASetOfAnchorPoints(std::vector<anchor>& aSetOfAnchorPoints);
     virtual int getAnchorIndex();
     virtual void setAnchorIndex(int anchorIndex);
+    virtual Coord& getDestSpeed();
+    virtual const Coord& getDestSpeed() const {return const_cast<carPacket*>(this)->getDestSpeed();}
+    virtual void setDestSpeed(const Coord& destSpeed);
 };
 
 inline void doPacking(cCommBuffer *b, carPacket& obj) {obj.parsimPack(b);}
@@ -315,62 +359,22 @@ inline void doUnpacking(cCommBuffer *b, carPacket& obj) {obj.parsimUnpack(b);}
  * }
  * </pre>
  */
-class INET_API stGuard : public ::cPacket
+
+class  stGuard :public Guard
 {
-  protected:
-    IPvXAddress activatorAddress_var;
-    unsigned int stGuardCounter_var;
-    unsigned int stGuardTTL_var;
-    Coord guardedPosition_var;
-    double guardedRadius_var;
-
-  private:
-    void copy(const stGuard& other);
-
-  protected:
-    // protected and unimplemented operator==(), to prevent accidental usage
-    bool operator==(const stGuard&);
-
   public:
-    stGuard(const char *name=NULL, int kind=0);
-    stGuard(const stGuard& other);
-    virtual ~stGuard();
-    stGuard& operator=(const stGuard& other);
-    virtual stGuard *dup() const {return new stGuard(*this);}
-    virtual void parsimPack(cCommBuffer *b);
-    virtual void parsimUnpack(cCommBuffer *b);
+    stGuard(int ID);
+    ~stGuard();
+    double currentTravelingAngel;
+    double previousTravelingAngel;
+    double getcurrentTravelingAngel();
+    void setcurrentTravelingAngel(double currentTravelingAngel);
+    double getpreviousTravelingAngel();
+    void setpreviousTravelingAngel(double previousTravelingAngel);
 
-    // field getter/setter methods
-    virtual IPvXAddress& getActivatorAddress();
-    virtual const IPvXAddress& getActivatorAddress() const {return const_cast<stGuard*>(this)->getActivatorAddress();}
-    virtual void setActivatorAddress(const IPvXAddress& activatorAddress);
-    virtual unsigned int getStGuardCounter() const;
-    virtual void setStGuardCounter(unsigned int stGuardCounter);
-    virtual unsigned int getStGuardTTL() const;
-    virtual void setStGuardTTL(unsigned int stGuardTTL);
-    virtual Coord& getGuardedPosition();
-    virtual const Coord& getGuardedPosition() const {return const_cast<stGuard*>(this)->getGuardedPosition();}
-    virtual void setGuardedPosition(const Coord& guardedPosition);
-    virtual double getGuardedRadius() const;
-    virtual void setGuardedRadius(double guardedRadius);
 };
 
-inline void doPacking(cCommBuffer *b, stGuard& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, stGuard& obj) {obj.parsimUnpack(b);}
 
-/**
- * Class generated from <tt>networklayer/routing/carRouting/carRouting.msg</tt> by opp_msgc.
- * <pre>
- * packet trGuard {
- *     IPvXAddress activatorAddress;
- *     unsigned int trGuardCounter;
- *     unsigned int trGuardTTL;
- *     Coord guardedPosition;
- *     double guardedRadius;
- *     Coord activatorSpeed;
- * }
- * </pre>
- */
 class INET_API trGuard : public ::cPacket
 {
   protected:

@@ -40,7 +40,10 @@ simple CAR
         double communicationRange @unit("m")= default(1000m);
         int stGuardTTL @unit("ms") = default(255ms);
         int trGuardTTL @unit("ms") = default(255ms);
-        double beaconInterval @unit("s") = default(5s);		
+        double beaconInterval @unit("s") = default(5s);	
+        double GuardedRadius @unit("m")= default(400m);
+        double nextRUtimer @unit("s") = default(0.02s); 
+             	
     gates:
         input ipIn;
         output ipOut;

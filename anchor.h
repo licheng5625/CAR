@@ -78,5 +78,6 @@ class anchor
      void setPreviousForwarderAngel(double previousForwarderAngel);
      double getCurrentForwarderAngel();
      void setCurrentForwarderAngel(double currentForwarderAngel);
+     bool operator==( anchor  otheranchor);
 };
 #endif /* RBVTRPACKET_H_ */

@@ -18,6 +18,14 @@
 #include "routeInterface/DelayPacketTable.h"
 #include "CAR/PositionTableforCar.h"
 #include "CAR/carRouting_msg.h"
+class packetInfor
+{
+public:
+    Coord speed;
+    simtime_t Traveltime;
+    Coord position;
+    double direction;
+};
 class INET_API CAR:public RouteInterface {
 public:
     CAR();
@@ -39,18 +47,27 @@ protected:
     simtime_t arrivalTime;
     simtime_t neighborValidityInterval;
     simtime_t maxJitter;
+    cMessage * RUTimer;
+    simtime_t nextRUtimer;
+    bool isendpoint;
     int seqNumOfPGB;
     // communication Range
     double communicationRange;
+    double GuardedRadius;
+    simtime_t stGuardTTL;
     std::map < IPvXAddress, std::vector<std::pair < simtime_t,int > > > PGBTable;
     std::map < IPvXAddress, std::vector<anchor> > AnchorTable;
+    std::map < IPvXAddress, packetInfor > desInfor;
     std::map <cMessage * ,AGF* > AGFTable;
+    std::map <cMessage * ,carPacket* > DATATable;
     std::vector<std::string> packetlist;
     double alpha;
     double neardistence;
     PositionTableforCar neighborPositionTable;
     PositionTableforCar guardsTable;
-
+    std::vector <Guard*>  ListOfguards;
+    double olddirection;
+    int stGuardID;
 private:
     virtual Result datagramPreRoutingHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop);
     virtual Result datagramForwardHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop){ return ACCEPT; }
@@ -64,10 +81,14 @@ private:
 
     void purgeNeighbors();
     simtime_t getNextNeighborExpiration();
+    void clearListofGuards();
+    std::vector <Guard*>  getVaildListofGuards();
+    void addTOListofGuards(Guard* guard);
 
     void processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlInfo);
     void processBeaconTimer();
     void processBeacon(carBeacon * beacon);
+    void processRUTimer(simtime_t timer);
 
     carBeacon * createBeacon();
     void sendBeacon(carBeacon * beacon, double delay);
@@ -76,6 +97,9 @@ private:
     PGB * createPGB(const IPvXAddress & destAddress);
     AGF * createAGF(PGB * pgbPacket);
     carPacket * createDataPacket(const IPvXAddress & destAddress,cPacket * datagram);
+    carPacket * createDataPacket(carPacket * srcpacket);
+    stGuard *createStguard();
+
     void  sendPGB(PGB * pgbPacket, double delay);
     void sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay);
     Coord caculateTheCoordOfTheAnchor(Coord position1, Coord position2);
@@ -90,6 +114,7 @@ private:
     double getVectorAngle(Coord vector);
     double adjustVectorAngle(double angle);
     void completeRouteDiscovery(const IPv4Address & destAddr);
+
 
  };
 

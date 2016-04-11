@@ -16,8 +16,7 @@ cplusplus {{
 #include "IPvXAddress.h"
 #include "Coord.h"  
 #include "simtime_t.h"
-#include <vector>
-}}
+  }}
 
 class noncobject IPvXAddress;
 class noncobject Coord;
@@ -27,6 +26,7 @@ packet carBeacon {
     IPvXAddress address;
     Coord speed;
     Coord position;
+     int  ListOfguards;
 }
 
 class anchor {

@@ -143,7 +143,7 @@ void anchor::setCurrentForwarderAngel(double currentForwarderAngel)
 }
 bool anchor::operator==( anchor  otheranchor)
  {
-    if(getPreviousForwarderHostName()==otheranchor.getPreviousForwarderHostName()&&getCurrentHostName()==otheranchor.getCurrentHostName())
+    if(getPreviousForwarderHostName()==otheranchor.getPreviousForwarderHostName()&&getCurrentHostName()==otheranchor.getCurrentHostName()&&getCurrentForwarderAngel()==otheranchor.getCurrentForwarderAngel())
         return true;
     else
         return false;

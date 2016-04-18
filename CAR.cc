@@ -54,6 +54,7 @@ void CAR::initialize( int stage){
         RouteInterface::configureInterfaces(par("interfaces"));
         EV_LOG(getHostName());
         stGuardID=0;
+        trGuardID=0;
       //  std::list<std::string> interjections=tracimanager->commandGetJunctionIds();
        /* for(std::list<std::string>::iterator iter=interjections.begin();iter!=interjections.end();++iter)
         {
@@ -125,7 +126,15 @@ std::vector <Guard*>  CAR::getVaildListofGuards()
        //
         if(ListOfguards[i]->getGuardTTL()<simTime()&& ListOfguards[i]->getGuardedRadius()>(getSelfPosition()-ListOfguards[i]->getGuardedPosition()).length())
         {
-            guards.push_back(ListOfguards[i]);
+            if(ListOfguards[i]->getGuardType()==stGuardType)
+                {
+                    guards.push_back(ListOfguards[i]);
+                }else
+                {
+
+                   Coord newposition= ListOfguards[i]->getGuardedPosition()+ ((trGuard*)ListOfguards[i])->getPreviousForwarderSpeed() *SIMTIME_DBL(simTime()-ListOfguards[i]->GuardTTL_var+stGuardTTL);
+                   ListOfguards[i]->setGuardedPosition(newposition);
+                }
         }
     }
     return guards;
@@ -158,7 +167,20 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                 //  double angle1 = adjustVectorAngle(aimanchor.getCurrentForwarderAngel())/ (2 * PI) * 360;
                 //  double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
                   double delta;// = angle1 - angle2;
+                 for (int i=0 ;i<getVaildListofGuards().size();i++)
+                 {
+                     if(getVaildListofGuards()[i]->activatorAddress_var==datapacket->getDestinationAddress())
+                     {
+                         Guard* thisguard=getVaildListofGuards()[i];
+                         Coord currentposition=thisguard->getGuardedPosition()+Coord(thisguard->getGuardedSpeed()*SIMTIME_DBL((simTime()-thisguard->GuardTTL_var+stGuardTTL)));
+                         anchor newAnchorPoint = addAsAnAnchor(thisguard->getGuardedSpeed(), thisguard->getGuardedSpeed(), thisguard->getGuardedPosition(),currentposition ,thisguard->getActivatorName(),thisguard->getActivatorName(),thisguard->getpreviousTravelingAngel(),thisguard->getcurrentTravelingAngel());
+                         if(!(datapacket->getASetOfAnchorPoints().back()==newAnchorPoint))
+                         {
+                             datapacket->getASetOfAnchorPoints().push_back(newAnchorPoint);
+                         }
+                     }
 
+                 }
                  if( isParallel(aimanchor.getCurrentForwarderAngel(),getAngel(),alpha,delta)&&myDistance<neardistence)
                      {
                          EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(myDistance)+" and in same line "+std::to_string(delta));
@@ -495,9 +517,22 @@ stGuard * CAR::createStguard()
     mystGuard->setGuardTTL(simTime()+stGuardTTL);
     mystGuard->setpreviousTravelingAngel(olddirection) ;
     mystGuard->setcurrentTravelingAngel(getAngel());
+    mystGuard->setGuardedSpeed(getSelfSpeed());
     return mystGuard;
 }
-
+trGuard * CAR::createTrguard()
+{
+    trGuard * mystGuard = new trGuard(trGuardID++);
+    mystGuard->setActivatorAddress(getSelfIPAddress());
+    mystGuard->setGuardedPosition(getSelfPosition());
+    mystGuard->setGuardedRadius(GuardedRadius);
+    mystGuard->setGuardTTL(simTime()+stGuardTTL);
+    mystGuard->setpreviousTravelingAngel(olddirection) ;
+    mystGuard->setcurrentTravelingAngel(getAngel());
+    mystGuard->setGuardedSpeed(getSelfSpeed());
+    mystGuard->setPreviousForwarderSpeed(olddirection*getSelfSpeed());
+    return mystGuard;
+}
 void CAR::sendPGB(PGB * pgbPacket, double delay)
 {
     CAR_EV << "Sending PGB packet: address = " << pgbPacket->getOriginatorAddress()
@@ -514,11 +549,8 @@ void CAR::sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay)
 /******************/
 void CAR::processRUTimer(simtime_t timer)
 {
-double d;
-if(!isParallel(olddirection,getAngel(),alpha,d)&&isendpoint)
+ if(!isParallel(olddirection,getAngel(),alpha,d)&&isendpoint)
     {
-        bool stgur=false;
-        bool trgur=false;
          for ( std::map < IPvXAddress, packetInfor >::const_iterator it = desInfor.begin(); it != desInfor.end(); it++)
            {
                if(std::abs(it->second.direction-olddirection)<0.01)
@@ -531,7 +563,7 @@ if(!isParallel(olddirection,getAngel(),alpha,d)&&isendpoint)
                        commucationtime=(communicationRange/getSelfSpeed().length())/2;
                 if(std::abs(it->second.direction-olddirection)>PI-0.01&&std::abs(it->second.direction-olddirection)<PI+0.01&&it->second.Traveltime<commucationtime)
                 {
-                    ListOfguards.push_back((Guard*)createStguard());
+                    ListOfguards.push_back((Guard*)createTrguard());
                 }
                }
            }

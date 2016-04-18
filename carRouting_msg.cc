@@ -1296,12 +1296,27 @@ void Guard::setGuardedPosition( Coord guardedPosition)
 {
     this->guardedPosition_var = guardedPosition;
 }
+Coord Guard::getGuardedSpeed()
+{
+    return guardedSpeed_var;
+}
 
+void Guard::setGuardedSpeed( Coord guardedSpeed)
+{
+    this->guardedSpeed_var = guardedSpeed;
+}
+std::string Guard::getActivatorName()
+{
+    return activatorHostName_var;
+}
+void Guard::setActivatorName( std::string activatorHostName_var)
+{
+    this->activatorHostName_var = activatorHostName_var;
+}
 double Guard::getGuardedRadius()
 {
     return guardedRadius_var;
 }
-
 void Guard::setGuardedRadius(double guardedRadius)
 {
     this->guardedRadius_var = guardedRadius;
@@ -1323,7 +1338,23 @@ bool Guard::operator==( Guard  guard)
     else
         return false;
 }
+double Guard::getcurrentTravelingAngel()
+{
+    return currentTravelingAngel;
+}
+void Guard::setcurrentTravelingAngel(double currentTravelingAngel)
+{
+    this->currentTravelingAngel = currentTravelingAngel;
+}
+double Guard::getpreviousTravelingAngel()
+{
+    return previousTravelingAngel;
+}
 
+void Guard::setpreviousTravelingAngel(double previousTravelingAngel)
+{
+    this->previousTravelingAngel = previousTravelingAngel;
+}
 stGuard::stGuard(int ID)
 {
     this->ID=ID;
@@ -1332,359 +1363,24 @@ stGuard::stGuard(int ID)
 stGuard::~stGuard()
 {
 }
-double stGuard::getcurrentTravelingAngel()
+trGuard::trGuard(int ID)
 {
-    return currentTravelingAngel;
+    this->ID=ID;
+    setGuardType(trGuardType);
 }
-
-void stGuard::setcurrentTravelingAngel(double currentTravelingAngel)
-{
-    this->currentTravelingAngel = currentTravelingAngel;
-}
-double stGuard::getpreviousTravelingAngel()
-{
-    return previousTravelingAngel;
-}
-
-void stGuard::setpreviousTravelingAngel(double previousTravelingAngel)
-{
-    this->previousTravelingAngel = previousTravelingAngel;
-}
-
-Register_Class(trGuard);
-
-trGuard::trGuard(const char *name, int kind) : ::cPacket(name,kind)
-{
-    this->trGuardCounter_var = 0;
-    this->trGuardTTL_var = 0;
-    this->guardedRadius_var = 0;
-}
-
-trGuard::trGuard(const trGuard& other) : ::cPacket(other)
-{
-    copy(other);
-}
-
 trGuard::~trGuard()
 {
 }
-
-trGuard& trGuard::operator=(const trGuard& other)
+Coord trGuard::getPreviousForwarderSpeed()
 {
-    if (this==&other) return *this;
-    ::cPacket::operator=(other);
-    copy(other);
-    return *this;
+    return previousForwarderSpeed_var;
 }
 
-void trGuard::copy(const trGuard& other)
+void trGuard::setPreviousForwarderSpeed( Coord previousForwarderSpeed)
 {
-    this->activatorAddress_var = other.activatorAddress_var;
-    this->trGuardCounter_var = other.trGuardCounter_var;
-    this->trGuardTTL_var = other.trGuardTTL_var;
-    this->guardedPosition_var = other.guardedPosition_var;
-    this->guardedRadius_var = other.guardedRadius_var;
-    this->activatorSpeed_var = other.activatorSpeed_var;
+    this->previousForwarderSpeed_var = previousForwarderSpeed;
 }
 
-void trGuard::parsimPack(cCommBuffer *b)
-{
-    ::cPacket::parsimPack(b);
-    doPacking(b,this->activatorAddress_var);
-    doPacking(b,this->trGuardCounter_var);
-    doPacking(b,this->trGuardTTL_var);
-    doPacking(b,this->guardedPosition_var);
-    doPacking(b,this->guardedRadius_var);
-    doPacking(b,this->activatorSpeed_var);
-}
-
-void trGuard::parsimUnpack(cCommBuffer *b)
-{
-    ::cPacket::parsimUnpack(b);
-    doUnpacking(b,this->activatorAddress_var);
-    doUnpacking(b,this->trGuardCounter_var);
-    doUnpacking(b,this->trGuardTTL_var);
-    doUnpacking(b,this->guardedPosition_var);
-    doUnpacking(b,this->guardedRadius_var);
-    doUnpacking(b,this->activatorSpeed_var);
-}
-
-IPvXAddress& trGuard::getActivatorAddress()
-{
-    return activatorAddress_var;
-}
-
-void trGuard::setActivatorAddress(const IPvXAddress& activatorAddress)
-{
-    this->activatorAddress_var = activatorAddress;
-}
-
-unsigned int trGuard::getTrGuardCounter() const
-{
-    return trGuardCounter_var;
-}
-
-void trGuard::setTrGuardCounter(unsigned int trGuardCounter)
-{
-    this->trGuardCounter_var = trGuardCounter;
-}
-
-unsigned int trGuard::getTrGuardTTL() const
-{
-    return trGuardTTL_var;
-}
-
-void trGuard::setTrGuardTTL(unsigned int trGuardTTL)
-{
-    this->trGuardTTL_var = trGuardTTL;
-}
-
-Coord& trGuard::getGuardedPosition()
-{
-    return guardedPosition_var;
-}
-
-void trGuard::setGuardedPosition(const Coord& guardedPosition)
-{
-    this->guardedPosition_var = guardedPosition;
-}
-
-double trGuard::getGuardedRadius() const
-{
-    return guardedRadius_var;
-}
-
-void trGuard::setGuardedRadius(double guardedRadius)
-{
-    this->guardedRadius_var = guardedRadius;
-}
-
-Coord& trGuard::getActivatorSpeed()
-{
-    return activatorSpeed_var;
-}
-
-void trGuard::setActivatorSpeed(const Coord& activatorSpeed)
-{
-    this->activatorSpeed_var = activatorSpeed;
-}
-
-class trGuardDescriptor : public cClassDescriptor
-{
-  public:
-    trGuardDescriptor();
-    virtual ~trGuardDescriptor();
-
-    virtual bool doesSupport(cObject *obj) const;
-    virtual const char *getProperty(const char *propertyname) const;
-    virtual int getFieldCount(void *object) const;
-    virtual const char *getFieldName(void *object, int field) const;
-    virtual int findField(void *object, const char *fieldName) const;
-    virtual unsigned int getFieldTypeFlags(void *object, int field) const;
-    virtual const char *getFieldTypeString(void *object, int field) const;
-    virtual const char *getFieldProperty(void *object, int field, const char *propertyname) const;
-    virtual int getArraySize(void *object, int field) const;
-
-    virtual std::string getFieldAsString(void *object, int field, int i) const;
-    virtual bool setFieldAsString(void *object, int field, int i, const char *value) const;
-
-    virtual const char *getFieldStructName(void *object, int field) const;
-    virtual void *getFieldStructPointer(void *object, int field, int i) const;
-};
-
-Register_ClassDescriptor(trGuardDescriptor);
-
-trGuardDescriptor::trGuardDescriptor() : cClassDescriptor("trGuard", "cPacket")
-{
-}
-
-trGuardDescriptor::~trGuardDescriptor()
-{
-}
-
-bool trGuardDescriptor::doesSupport(cObject *obj) const
-{
-    return dynamic_cast<trGuard *>(obj)!=NULL;
-}
-
-const char *trGuardDescriptor::getProperty(const char *propertyname) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? basedesc->getProperty(propertyname) : NULL;
-}
-
-int trGuardDescriptor::getFieldCount(void *object) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 6+basedesc->getFieldCount(object) : 6;
-}
-
-unsigned int trGuardDescriptor::getFieldTypeFlags(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldTypeFlags(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    static unsigned int fieldTypeFlags[] = {
-        FD_ISCOMPOUND,
-        FD_ISEDITABLE,
-        FD_ISEDITABLE,
-        FD_ISCOMPOUND,
-        FD_ISEDITABLE,
-        FD_ISCOMPOUND,
-    };
-    return (field>=0 && field<6) ? fieldTypeFlags[field] : 0;
-}
-
-const char *trGuardDescriptor::getFieldName(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldName(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    static const char *fieldNames[] = {
-        "activatorAddress",
-        "trGuardCounter",
-        "trGuardTTL",
-        "guardedPosition",
-        "guardedRadius",
-        "activatorSpeed",
-    };
-    return (field>=0 && field<6) ? fieldNames[field] : NULL;
-}
-
-int trGuardDescriptor::findField(void *object, const char *fieldName) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    int base = basedesc ? basedesc->getFieldCount(object) : 0;
-    if (fieldName[0]=='a' && strcmp(fieldName, "activatorAddress")==0) return base+0;
-    if (fieldName[0]=='t' && strcmp(fieldName, "trGuardCounter")==0) return base+1;
-    if (fieldName[0]=='t' && strcmp(fieldName, "trGuardTTL")==0) return base+2;
-    if (fieldName[0]=='g' && strcmp(fieldName, "guardedPosition")==0) return base+3;
-    if (fieldName[0]=='g' && strcmp(fieldName, "guardedRadius")==0) return base+4;
-    if (fieldName[0]=='a' && strcmp(fieldName, "activatorSpeed")==0) return base+5;
-    return basedesc ? basedesc->findField(object, fieldName) : -1;
-}
-
-const char *trGuardDescriptor::getFieldTypeString(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldTypeString(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    static const char *fieldTypeStrings[] = {
-        "IPvXAddress",
-        "unsigned int",
-        "unsigned int",
-        "Coord",
-        "double",
-        "Coord",
-    };
-    return (field>=0 && field<6) ? fieldTypeStrings[field] : NULL;
-}
-
-const char *trGuardDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldProperty(object, field, propertyname);
-        field -= basedesc->getFieldCount(object);
-    }
-    switch (field) {
-        default: return NULL;
-    }
-}
-
-int trGuardDescriptor::getArraySize(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getArraySize(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    trGuard *pp = (trGuard *)object; (void)pp;
-    switch (field) {
-        default: return 0;
-    }
-}
-
-std::string trGuardDescriptor::getFieldAsString(void *object, int field, int i) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldAsString(object,field,i);
-        field -= basedesc->getFieldCount(object);
-    }
-    trGuard *pp = (trGuard *)object; (void)pp;
-    switch (field) {
-        case 0: {std::stringstream out; out << pp->getActivatorAddress(); return out.str();}
-        case 1: return ulong2string(pp->getTrGuardCounter());
-        case 2: return ulong2string(pp->getTrGuardTTL());
-        case 3: {std::stringstream out; out << pp->getGuardedPosition(); return out.str();}
-        case 4: return double2string(pp->getGuardedRadius());
-        case 5: {std::stringstream out; out << pp->getActivatorSpeed(); return out.str();}
-        default: return "";
-    }
-}
-
-bool trGuardDescriptor::setFieldAsString(void *object, int field, int i, const char *value) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->setFieldAsString(object,field,i,value);
-        field -= basedesc->getFieldCount(object);
-    }
-    trGuard *pp = (trGuard *)object; (void)pp;
-    switch (field) {
-        case 1: pp->setTrGuardCounter(string2ulong(value)); return true;
-        case 2: pp->setTrGuardTTL(string2ulong(value)); return true;
-        case 4: pp->setGuardedRadius(string2double(value)); return true;
-        default: return false;
-    }
-}
-
-const char *trGuardDescriptor::getFieldStructName(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldStructName(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    switch (field) {
-        case 0: return opp_typename(typeid(IPvXAddress));
-        case 3: return opp_typename(typeid(Coord));
-        case 5: return opp_typename(typeid(Coord));
-        default: return NULL;
-    };
-}
-
-void *trGuardDescriptor::getFieldStructPointer(void *object, int field, int i) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldStructPointer(object, field, i);
-        field -= basedesc->getFieldCount(object);
-    }
-    trGuard *pp = (trGuard *)object; (void)pp;
-    switch (field) {
-        case 0: return (void *)(&pp->getActivatorAddress()); break;
-        case 3: return (void *)(&pp->getGuardedPosition()); break;
-        case 5: return (void *)(&pp->getActivatorSpeed()); break;
-        default: return NULL;
-    }
-}
 
 Register_Class(carPacket);
 

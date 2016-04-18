@@ -530,7 +530,7 @@ trGuard * CAR::createTrguard()
     mystGuard->setpreviousTravelingAngel(olddirection) ;
     mystGuard->setcurrentTravelingAngel(getAngel());
     mystGuard->setGuardedSpeed(getSelfSpeed());
-    mystGuard->setPreviousForwarderSpeed(olddirection*getSelfSpeed());
+    mystGuard->setPreviousForwarderSpeed(getSelfSpeed()*olddirection);
     return mystGuard;
 }
 void CAR::sendPGB(PGB * pgbPacket, double delay)
@@ -549,6 +549,7 @@ void CAR::sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay)
 /******************/
 void CAR::processRUTimer(simtime_t timer)
 {
+    double d;
  if(!isParallel(olddirection,getAngel(),alpha,d)&&isendpoint)
     {
          for ( std::map < IPvXAddress, packetInfor >::const_iterator it = desInfor.begin(); it != desInfor.end(); it++)

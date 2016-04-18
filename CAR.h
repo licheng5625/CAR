@@ -68,7 +68,7 @@ protected:
     std::vector <Guard*>  ListOfguards;
     double olddirection;
     int stGuardID;
-    int trGuardID
+    int trGuardID;
 private:
     virtual Result datagramPreRoutingHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop);
     virtual Result datagramForwardHook(IPv4Datagram * datagram, const InterfaceEntry * inputInterfaceEntry, const InterfaceEntry *& outputInterfaceEntry, IPv4Address & nextHop){ return ACCEPT; }
@@ -100,6 +100,7 @@ private:
     carPacket * createDataPacket(const IPvXAddress & destAddress,cPacket * datagram);
     carPacket * createDataPacket(carPacket * srcpacket);
     stGuard *createStguard();
+    trGuard *createTrguard();
 
     void  sendPGB(PGB * pgbPacket, double delay);
     void sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay);

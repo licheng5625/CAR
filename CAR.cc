@@ -99,13 +99,13 @@ void CAR::clearListofGuards()
 {
     for (int i=ListOfguards.size()-1;i>=0;i--)
     {
-        if(ListOfguards[i]->getGuardTTL()< simTime())
+        if(ListOfguards[i].getGuardTTL()< simTime())
         {
             ListOfguards.erase(ListOfguards.begin()+i+1);
         }
     }
 }
-void CAR::addTOListofGuards(Guard* guard)
+void CAR::addTOListofGuards(Guard guard)
 {
     for (int i=ListOfguards.size()-1;i>=0;i--)
     {
@@ -118,22 +118,21 @@ void CAR::addTOListofGuards(Guard* guard)
         }
     }
 }
-std::vector <Guard*>  CAR::getVaildListofGuards()
+std::vector <Guard>  CAR::getVaildListofGuards()
 {
-    std::vector <Guard*> guards;
+    std::vector <Guard> guards;
     for (int i=ListOfguards.size()-1;i>=0;i--)
     {
        //
-        if(ListOfguards[i]->getGuardTTL()<simTime()&& ListOfguards[i]->getGuardedRadius()>(getSelfPosition()-ListOfguards[i]->getGuardedPosition()).length())
+        if(ListOfguards[i].getGuardTTL()<simTime()&& ListOfguards[i].getGuardedRadius()>(getSelfPosition()-ListOfguards[i].getGuardedPosition()).length())
         {
-            if(ListOfguards[i]->getGuardType()==stGuardType)
+            if(ListOfguards[i].getGuardType()==stGuardType)
                 {
                     guards.push_back(ListOfguards[i]);
                 }else
                 {
-
-                   Coord newposition= ListOfguards[i]->getGuardedPosition()+ ((trGuard*)ListOfguards[i])->getPreviousForwarderSpeed() *SIMTIME_DBL(simTime()-ListOfguards[i]->GuardTTL_var+stGuardTTL);
-                   ListOfguards[i]->setGuardedPosition(newposition);
+                   Coord newposition= ListOfguards[i].getGuardedPosition()+ ((trGuard*)&ListOfguards[i])->getPreviousForwarderSpeed() *SIMTIME_DBL(simTime()-ListOfguards[i].GuardTTL_var+stGuardTTL);
+                   ListOfguards[i].setGuardedPosition(newposition);
                 }
         }
     }
@@ -169,11 +168,11 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                   double delta;// = angle1 - angle2;
                  for (int i=0 ;i<getVaildListofGuards().size();i++)
                  {
-                     if(getVaildListofGuards()[i]->activatorAddress_var==datapacket->getDestinationAddress())
+                     if(getVaildListofGuards()[i].activatorAddress_var==datapacket->getDestinationAddress())
                      {
-                         Guard* thisguard=getVaildListofGuards()[i];
-                         Coord currentposition=thisguard->getGuardedPosition()+Coord(thisguard->getGuardedSpeed()*SIMTIME_DBL((simTime()-thisguard->GuardTTL_var+stGuardTTL)));
-                         anchor newAnchorPoint = addAsAnAnchor(thisguard->getGuardedSpeed(), thisguard->getGuardedSpeed(), thisguard->getGuardedPosition(),currentposition ,thisguard->getActivatorName(),thisguard->getActivatorName(),thisguard->getpreviousTravelingAngel(),thisguard->getcurrentTravelingAngel());
+                         Guard thisguard=getVaildListofGuards()[i];
+                         Coord currentposition=thisguard.getGuardedPosition()+Coord(thisguard.getGuardedSpeed()*SIMTIME_DBL((simTime()-thisguard.GuardTTL_var+stGuardTTL)));
+                         anchor newAnchorPoint = addAsAnAnchor(thisguard.getGuardedSpeed(), thisguard.getGuardedSpeed(), thisguard.getGuardedPosition(),currentposition ,thisguard.getActivatorName(),thisguard.getActivatorName(),thisguard.getpreviousTravelingAngel(),thisguard.getcurrentTravelingAngel());
                          if(!(datapacket->getASetOfAnchorPoints().back()==newAnchorPoint))
                          {
                              datapacket->getASetOfAnchorPoints().push_back(newAnchorPoint);
@@ -227,11 +226,14 @@ INetfilter::IHook::Result CAR::datagramLocalOutHook(IPv4Datagram * datagram, con
            EV_LOG("Multicast");
            return ACCEPT;
        }
-           else {
-               EV_LOG("check PGB");
-               PGB * PGBpacket=dynamic_cast<PGB *>( (dynamic_cast<UDPPacket *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()))->getEncapsulatedPacket());
-               AGF * AGFpacket=dynamic_cast<AGF *>( (dynamic_cast<UDPPacket *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()))->getEncapsulatedPacket());
-           }
+       AGF * afgpacket= dynamic_cast<AGF *>( (dynamic_cast<UDPPacket *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()))->getEncapsulatedPacket());
+       //AGF * afgpacket= (dynamic_cast<AGF *>((dynamic_cast<cPacket *>(datagram))->getEncapsulatedPacket()));
+       if (afgpacket)
+       {
+           nextHop=afgpacket->getnexthopAddress().get4();
+           return ACCEPT;
+       }
+
        if(AnchorTable.find(destination)==AnchorTable.end()){
            startRouteDiscovery(destination);
            delayPacketlist.addPacket(destination,datagram);
@@ -249,6 +251,8 @@ INetfilter::IHook::Result CAR::datagramLocalOutHook(IPv4Datagram * datagram, con
 }
 void CAR::startRouteDiscovery(const IPv4Address & destAddr)
 {
+    LOG_EV << "Starting route discovery with originator "<< getSelfAddress()<< " and destination "<< destAddr << endl;
+
     CAR_EV << "Starting route discovery with originator "<< getSelfAddress()<< " and destination "<< destAddr << endl;
     //aSetOfAnchorPoints.clear();
     //std::cout<< aSetOfAnchorPoints.size() << endl;
@@ -407,7 +411,7 @@ void CAR::processBeaconTimer()
        IPvXAddress selfAddress = getSelfAddress();
        if (!selfAddress.isUnspecified())
        {
-           sendBeacon(createBeacon(), uniform(0, maxJitter).dbl());
+          sendBeacon(createBeacon(), uniform(0, maxJitter).dbl());
        }
        scheduleBeaconTimer();
        schedulePurgeNeighborsTimer();
@@ -429,7 +433,7 @@ void CAR::processBeacon(carBeacon * beacon)
     }
     CAR_EV<<"add neighbor"<<globalPositionTable.getHostName(beacon->getAddress())<<endl;
     neighborPositionTable.setPosition(beacon->getAddress(), beacon->getPosition(),beacon->getSpeed(),globalPositionTable.getHostName(beacon->getAddress()));
-    std::vector <Guard*>  ListOfguards =beacon->getListOfguards();
+    std::vector <Guard>  ListOfguards =beacon->getListOfguards();
     for(int i=0;i<ListOfguards.size();i++)
     {
         addTOListofGuards(ListOfguards[i]);
@@ -508,40 +512,43 @@ carPacket * CAR::createDataPacket(const IPvXAddress & destAddress,cPacket * data
     dataPacket->encapsulate(datagram);
     return dataPacket;
 }
-stGuard * CAR::createStguard()
+stGuard  CAR::createStguard()
 {
-    stGuard * mystGuard = new stGuard(stGuardID++);
-    mystGuard->setActivatorAddress(getSelfIPAddress());
-    mystGuard->setGuardedPosition(getSelfPosition());
-    mystGuard->setGuardedRadius(GuardedRadius);
-    mystGuard->setGuardTTL(simTime()+stGuardTTL);
-    mystGuard->setpreviousTravelingAngel(olddirection) ;
-    mystGuard->setcurrentTravelingAngel(getAngel());
-    mystGuard->setGuardedSpeed(getSelfSpeed());
+    stGuard  mystGuard =  stGuard(stGuardID++);
+    mystGuard.setActivatorAddress(getSelfIPAddress());
+    mystGuard.setGuardedPosition(getSelfPosition());
+    mystGuard.setGuardedRadius(GuardedRadius);
+    mystGuard.setGuardTTL(simTime()+stGuardTTL);
+    mystGuard.setpreviousTravelingAngel(olddirection) ;
+    mystGuard.setcurrentTravelingAngel(getAngel());
+    mystGuard.setGuardedSpeed(getSelfSpeed());
     return mystGuard;
 }
-trGuard * CAR::createTrguard()
+trGuard  CAR::createTrguard()
 {
-    trGuard * mystGuard = new trGuard(trGuardID++);
-    mystGuard->setActivatorAddress(getSelfIPAddress());
-    mystGuard->setGuardedPosition(getSelfPosition());
-    mystGuard->setGuardedRadius(GuardedRadius);
-    mystGuard->setGuardTTL(simTime()+stGuardTTL);
-    mystGuard->setpreviousTravelingAngel(olddirection) ;
-    mystGuard->setcurrentTravelingAngel(getAngel());
-    mystGuard->setGuardedSpeed(getSelfSpeed());
-    mystGuard->setPreviousForwarderSpeed(getSelfSpeed()*olddirection);
+    trGuard  mystGuard =  trGuard(trGuardID++);
+    mystGuard.setActivatorAddress(getSelfIPAddress());
+    mystGuard.setGuardedPosition(getSelfPosition());
+    mystGuard.setGuardedRadius(GuardedRadius);
+    mystGuard.setGuardTTL(simTime()+stGuardTTL);
+    mystGuard.setpreviousTravelingAngel(olddirection) ;
+    mystGuard.setcurrentTravelingAngel(getAngel());
+    mystGuard.setGuardedSpeed(getSelfSpeed());
+    mystGuard.setPreviousForwarderSpeed(getSelfSpeed()*olddirection);
     return mystGuard;
 }
 void CAR::sendPGB(PGB * pgbPacket, double delay)
 {
     CAR_EV << "Sending PGB packet: address = " << pgbPacket->getOriginatorAddress()
             << ", position = " << pgbPacket->getOriginatorPosition() << ", speed = " << pgbPacket->getOriginatorSpeed() << endl;
+    LOG_EV<< "Sending PGB packet: address = " << pgbPacket->getOriginatorAddress()
+                    << ", position = " << pgbPacket->getOriginatorPosition() << ", speed = " << pgbPacket->getOriginatorSpeed() << endl;
     MulticastRIPacket(pgbPacket,255,delay);
 }
 void CAR::sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay)
 {
     std::cout << "Sending AGF Route Reply to "<< agfPacket->getOriginatorAddress() <<"  "<<globalPositionTable.getHostName(agfPacket->getOriginatorAddress())<<" next Hop is "<<globalPositionTable.getHostName(nextHop)<< endl;
+    LOG_EV << "Sending AGF Route Reply to "<< agfPacket->getOriginatorAddress() <<"  "<<globalPositionTable.getHostName(agfPacket->getOriginatorAddress())<<" next Hop is "<<globalPositionTable.getHostName(nextHop)<< endl;
     sendRIPacket(agfPacket,nextHop,255,delay);
 }
 /******************/
@@ -556,7 +563,7 @@ void CAR::processRUTimer(simtime_t timer)
            {
                if(std::abs(it->second.direction-olddirection)<0.01)
                {
-                   ListOfguards.push_back((Guard*)createStguard());
+                   ListOfguards.push_back((Guard)createStguard());
                }else
                {
                    simtime_t commucationtime=1000;
@@ -564,7 +571,7 @@ void CAR::processRUTimer(simtime_t timer)
                        commucationtime=(communicationRange/getSelfSpeed().length())/2;
                 if(std::abs(it->second.direction-olddirection)>PI-0.01&&std::abs(it->second.direction-olddirection)<PI+0.01&&it->second.Traveltime<commucationtime)
                 {
-                    ListOfguards.push_back((Guard*)createTrguard());
+                    ListOfguards.push_back((Guard)createTrguard());
                 }
                }
            }
@@ -656,12 +663,12 @@ bool CAR::isSeenPGB(IPvXAddress ipadd, int seqnum)
 void CAR::receivePGB(PGB * pgbPacket)
 {
     EV_LOG("Process PGB");
-
-    CAR_EV <<getSelfAddress()<< "  Receiving PGB from " << pgbPacket->getOriginatorAddress() << " to " << pgbPacket->getDestAddress() << endl;
+    LOG_EV <<getSelfAddress()<< "  Receiving "<<pgbPacket->getName()<<" from " << pgbPacket->getOriginatorAddress() << " to " << pgbPacket->getDestAddress() << endl;
     std::cout <<getSelfAddress()<< "  Receiving PGB from " << pgbPacket->getOriginatorAddress() << " to " << pgbPacket->getDestAddress() << endl;
     if(getSelfAddress()==pgbPacket->getOriginatorAddress())
     {
         EV_LOG("  Receiving self PGB drop " );
+        delete pgbPacket;
         return;
     }
     simtime_t arrivalTime = pgbPacket->getArrivalTime();
@@ -681,7 +688,7 @@ void CAR::receivePGB(PGB * pgbPacket)
         if (pgbPacket->getDestAddress() == getSelfAddress())
                {
                    EV_LOG ( "The PGB packet reaches its destination!!!" );
-                   LOG_EV<<"The PGB packet reaches its destination!!!"<<endl;
+                   LOG_EV<<"The PGB "<<pgbPacket->getName()<<" packet reaches its destination!!!"<<endl;
                    //double angle1 = adjustVectorAngle(previousForwarderAngel)/ (2 * PI) * 360;
                  //  double angle2 = adjustVectorAngle(getAngel()) / (2 * PI) * 360;
                    double delta;// = angle1 - angle2;
@@ -718,6 +725,7 @@ void CAR::receivePGB(PGB * pgbPacket)
                    {
                        EV_LOG ( "no next hop to reply PGB packet" );
                    }*/
+                   delete pgbPacket;
                }
             else
                 {
@@ -755,16 +763,21 @@ void CAR::receivePGB(PGB * pgbPacket)
     }
     else
     {
+        delete pgbPacket;
         EV_LOG("  Receiving same PGB drop " );
         return;
     }
 }
 void CAR::receiveAGF(AGF * agfPacket)
 {
-    CAR_EV << "Receiving AGF Route Reply from: " << agfPacket->getDestAddress() << "back to " << agfPacket->getOriginatorAddress() << endl;
+    LOG_EV << "Receiving AGF Route Reply from: " << agfPacket->getDestAddress() << " back to " << agfPacket->getOriginatorAddress() << endl;
+    CAR_EV << "Receiving AGF Route Reply from: " << agfPacket->getDestAddress() << " back to " << agfPacket->getOriginatorAddress() << endl;
+
     std::cout <<getSelfAddress()<< "Receiving AGF Route Reply from: " << agfPacket->getDestAddress() << "back to " << agfPacket->getOriginatorAddress() << endl;
     if (getSelfAddress() == agfPacket->getOriginatorAddress())
     {
+        LOG_EV <<"The AGF Route Reply reaches the originator!!!"<<endl;
+
         EV_LOG ("The AGF Route Reply reaches the originator!!!");
         AnchorTable[agfPacket->getDestAddress()]=agfPacket->getASetOfAnchorPoints();
         packetInfor myinfor;
@@ -854,20 +867,21 @@ void CAR::trysendAGF(AGF * agfPacket,cMessage* timer)
         LOG_EV<<"I send "<<agfPacket->getName()<<" to neighbors: "+globalPositionTable.getHostName(bestNextHopAddress)<<" aimanchor is "<<aimanchor.getPreviousForwarderHostName()<<endl;
 
        // LOG_EV << "Sending "<<agfPacket->getName()<<" Route Reply to "<< agfPacket->getOriginatorAddress() <<"  "<<globalPositionTable.getHostName(agfPacket->getOriginatorAddress())<<" next Hop is "<<globalPositionTable.getHostName(nextHop)<< endl;
+        agfPacket->setnexthopAddress(bestNextHopAddress);
         sendAGF(agfPacket, bestNextHopAddress, uniform(0, maxJitter).dbl());
       }else
       {
-          if(timer==NULL)
+         /* if(timer==NULL)
           {
-          std::string name=std::string("ResendAGFTimer_")+agfPacket->getName();
-          cMessage* ResendAGFTimer = new cMessage(name.c_str());
-          scheduleAt(simTime() + 0.3, ResendAGFTimer);
-          AGFTable[ResendAGFTimer]=agfPacket;
+              std::string name=std::string("ResendAGFTimer_")+agfPacket->getName();
+              cMessage* ResendAGFTimer = new cMessage(name.c_str());
+              scheduleAt(simTime() + 0.3, ResendAGFTimer);
+              AGFTable[ResendAGFTimer]=agfPacket;
           }else
           {
               scheduleAt(simTime() + 0.3, timer);
               AGFTable[timer]=agfPacket;
-          }
+          }*/
           EV_LOG( "Can't find next hop droped" );
           LOG_EV<< "Can't find next hop resend at "<<simTime() + 0.3<<endl;
       }

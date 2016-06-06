@@ -65,7 +65,7 @@ protected:
     double neardistence;
     PositionTableforCar neighborPositionTable;
     PositionTableforCar guardsTable;
-    std::vector <Guard*>  ListOfguards;
+    std::vector <Guard>  ListOfguards;
     double olddirection;
     int stGuardID;
     int trGuardID;
@@ -83,8 +83,8 @@ private:
     void purgeNeighbors();
     simtime_t getNextNeighborExpiration();
     void clearListofGuards();
-    std::vector <Guard*>  getVaildListofGuards();
-    void addTOListofGuards(Guard* guard);
+    std::vector <Guard>  getVaildListofGuards();
+    void addTOListofGuards(Guard guard);
 
     void processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlInfo);
     void processBeaconTimer();
@@ -99,8 +99,8 @@ private:
     AGF * createAGF(PGB * pgbPacket);
     carPacket * createDataPacket(const IPvXAddress & destAddress,cPacket * datagram);
     carPacket * createDataPacket(carPacket * srcpacket);
-    stGuard *createStguard();
-    trGuard *createTrguard();
+    stGuard createStguard();
+    trGuard createTrguard();
 
     void  sendPGB(PGB * pgbPacket, double delay);
     void sendAGF(AGF * agfPacket, const IPv4Address& nextHop, double delay);

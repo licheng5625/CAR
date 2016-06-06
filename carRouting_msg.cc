@@ -130,11 +130,11 @@ void carBeacon::setPosition(const Coord& position)
 {
     this->position_var = position;
 }
-std::vector <Guard*> carBeacon::getListOfguards()
+std::vector <Guard> carBeacon::getListOfguards()
 {
     return ListOfguards_var;
 }
-void carBeacon::setListOfguards(std::vector <Guard*> ListOfguards)
+void carBeacon::setListOfguards(std::vector <Guard> ListOfguards)
 {
     this->ListOfguards_var = ListOfguards;
 }
@@ -867,6 +867,7 @@ void AGF::copy(const AGF& other)
 {
     this->originatorAddress_var = other.originatorAddress_var;
     this->destAddress_var = other.destAddress_var;
+    this->nexthopAddress_var=other.nexthopAddress_var;
     this->travelTime_var = other.travelTime_var;
     this->numOfHops_var = other.numOfHops_var;
     this->averageNumOfNeighbors_var = other.averageNumOfNeighbors_var;
@@ -880,6 +881,7 @@ void AGF::copy(const AGF& other)
 void AGF::parsimPack(cCommBuffer *b)
 {
     ::cPacket::parsimPack(b);
+    doPacking(b,this->nexthopAddress_var);
     doPacking(b,this->originatorAddress_var);
     doPacking(b,this->destAddress_var);
     doPacking(b,this->travelTime_var);
@@ -904,7 +906,17 @@ void AGF::parsimUnpack(cCommBuffer *b)
     doUnpacking(b,this->destPosition_var);
     doUnpacking(b,this->destSpeed_var);
     doUnpacking(b,this->aSetOfAnchorPoints_var);
+    doUnpacking(b,this->nexthopAddress_var);
     doUnpacking(b,this->anchorIndex);
+}
+IPvXAddress& AGF::getnexthopAddress()
+{
+    return nexthopAddress_var;
+}
+
+void AGF::setnexthopAddress(const IPvXAddress& nexthopAddress_var)
+{
+    this->nexthopAddress_var = nexthopAddress_var;
 }
 
 IPvXAddress& AGF::getOriginatorAddress()

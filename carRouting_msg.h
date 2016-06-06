@@ -96,7 +96,7 @@ class INET_API carBeacon : public ::cPacket
     IPvXAddress address_var;
     Coord speed_var;
     Coord position_var;
-    std::vector <Guard*>  ListOfguards_var;
+    std::vector <Guard>  ListOfguards_var;
   private:
     void copy(const carBeacon& other);
 
@@ -123,8 +123,8 @@ class INET_API carBeacon : public ::cPacket
     virtual Coord& getPosition();
     virtual const Coord& getPosition() const {return const_cast<carBeacon*>(this)->getPosition();}
     virtual void setPosition(const Coord& position);
-    virtual std::vector <Guard*> getListOfguards() ;
-    virtual void setListOfguards(std::vector <Guard*>  ListOfguards);
+    virtual std::vector <Guard> getListOfguards() ;
+    virtual void setListOfguards(std::vector <Guard>  ListOfguards);
 };
 
 inline void doPacking(cCommBuffer *b, carBeacon& obj) {obj.parsimPack(b);}
@@ -258,6 +258,7 @@ class INET_API AGF : public ::cPacket
     Coord destPosition_var;
     Coord destSpeed_var;
     std::vector<anchor> aSetOfAnchorPoints_var;
+    IPvXAddress nexthopAddress_var;
 
   private:
     void copy(const AGF& other);
@@ -280,6 +281,8 @@ class INET_API AGF : public ::cPacket
     virtual IPvXAddress& getOriginatorAddress();
     virtual const IPvXAddress& getOriginatorAddress() const {return const_cast<AGF*>(this)->getOriginatorAddress();}
     virtual void setOriginatorAddress(const IPvXAddress& originatorAddress);
+    IPvXAddress& getnexthopAddress();
+    void setnexthopAddress(const IPvXAddress& nexthopAddress_var);
     virtual IPvXAddress& getDestAddress();
     virtual const IPvXAddress& getDestAddress() const {return const_cast<AGF*>(this)->getDestAddress();}
     virtual void setDestAddress(const IPvXAddress& destAddress);

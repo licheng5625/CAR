@@ -183,7 +183,10 @@ INetfilter::IHook::Result CAR::datagramPostRoutingHook(IPv4Datagram * datagram, 
                  if( isParallel(aimanchor.getCurrentForwarderAngel(),getAngel(),alpha,delta)&&myDistance<neardistence)
                      {
                          EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" near "+std::to_string(myDistance)+" and in same line "+std::to_string(delta));
-                         datapacket->anchorIndex=datapacket->anchorIndex+1;
+                         if(datapacket->anchorIndex+1!=datapacket->getASetOfAnchorPoints().size())
+                         {
+                             datapacket->anchorIndex=datapacket->anchorIndex+1;
+                         }
                          aimanchor=datapacket->getASetOfAnchorPoints()[datapacket->anchorIndex];
                          nextReverseAnchorPosition = aimanchor.getCurrentNodePosition();
                          EV_LOG ( "new aim anchor from "+ aimanchor.getPreviousForwarderHostName()+"  to  "+aimanchor.getCurrentHostName());

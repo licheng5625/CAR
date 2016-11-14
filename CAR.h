@@ -51,6 +51,8 @@ protected:
     simtime_t nextRUtimer;
     bool isendpoint;
     int seqNumOfPGB;
+    bool usingCommunacteDirection;
+    bool isUsingJunctionCars;
     // communication Range
     double communicationRange;
     double GuardedRadius;
@@ -67,6 +69,7 @@ protected:
     PositionTableforCar guardsTable;
     std::vector <Guard>  ListOfguards;
     double olddirection;
+    bool is0and180Pall;
     int stGuardID;
     int trGuardID;
 private:

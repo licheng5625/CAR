@@ -35,14 +35,17 @@ void CAR::initialize( int stage){
         checkTime = 0;
         arrivalTime=0;
         seqNumOfPGB=0;
-        neardistence=200;
+        usingCommunacteDirection = par("usingCommunacteDirection");
         nextRUtimer= par("nextRUtimer");
         GuardedRadius = par("GuardedRadius");
         beaconInterval = par("beaconInterval");
         communicationRange = par("communicationRange");
+        neardistence=communicationRange/2;
         neighborValidityInterval = par("neighborValidityInterval");         // maybe will not be used
         maxJitter = par("maxJitter");
         stGuardTTL = par("stGuardTTL");
+        is0and180Pall= par("is0and180Pall");
+        isUsingJunctionCars= par("isUsingJunctionCars");
        // nextRUtimer= par("nextRUtimer");
       //  RUliftime= par("RUliftime");
         routingTable = check_and_cast<IRoutingTable *>(getModuleByPath(par("routingTableModule")));
@@ -338,7 +341,7 @@ void CAR::processMessage(cPacket * ctrlPacket,IPv4ControlInfo *udpProtocolCtrlIn
 void CAR::scheduleBeaconTimer()
 {
     EV_LOG("Scheduling beacon timer");
-    //todo :  The fewer neighbors there are, the more frequent is a node¡¯s HELLO beaconing.
+    //todo :  The fewer neighbors there are, the more frequent is a nodeï¿½ï¿½s HELLO beaconing.
     scheduleAt(simTime() + beaconInterval, beaconTimer);
 }
 void CAR::purgeNeighbors()
@@ -703,7 +706,13 @@ void CAR::receivePGB(PGB * pgbPacket)
                            cout<<currentSpeed <<"   "<< getAngel()<<endl;
                            CAR_EV<<currentSpeed <<"   "<< getAngel()<<endl;
                            EV_LOG ( "add anchor with angel: " +std::to_string(delta));
-                           anchor newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, currentSpeed, thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,getAngel());
+                           anchor newAnchorPoint;
+                           if (usingCommunacteDirection){
+                               newAnchorPoint= addAsAnAnchor(theSpeedOfPreviousForwarder, currentSpeed, thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,getAngel());
+                           }else
+                           {
+                               newAnchorPoint= addAsAnAnchor(currentSpeed, currentSpeed, currentPosition, currentPosition,PreviousForwarderHostName,getHostName(),getAngel(),getAngel());
+                           }
                            anchorSet.push_back(newAnchorPoint);
                            pgbPacket->setASetOfAnchorPoints(anchorSet);
                          //  std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
@@ -751,13 +760,23 @@ void CAR::receivePGB(PGB * pgbPacket)
                             CAR_EV<<currentSpeed <<"   "<< getAngel()<<endl;
                             EV_LOG ( "add anchor with angel: " +std::to_string(delta));
                             //LOG_EV<<"add anchor with angel: " <<std::to_string(delta)<<endl;
-                            anchor  newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, currentSpeed, thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,getAngel());
+                            anchor  newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, theSpeedOfPreviousForwarder, thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,getAngel());
                             std::cout<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                             anchorSet.push_back(newAnchorPoint);
                             pgbPacket->setASetOfAnchorPoints(anchorSet);
                           //  std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                         }else
                         {
+                            if(isLocalateInIntersection()&&isUsingJunctionCars)
+                            {
+                                EV_LOG("i am in the junction");
+                                cout<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
+                                CAR_EV<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
+                                cout<<currentSpeed <<"   "<< getAngel()<<endl;
+                                CAR_EV<<currentSpeed <<"   "<< getAngel()<<endl;
+                                anchor  newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, Coord(-theSpeedOfPreviousForwarder.y,theSpeedOfPreviousForwarder.x,0), thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,previousForwarderAngel+PI/2);
+                                pgbPacket->setPreviousForwarderAngel(previousForwarderAngel+PI/2);
+                            }
                             //LOG_EV<<"don't add anchor with angel: " <<std::to_string(delta)<<endl;
                             EV_LOG ( "don't add anchor with angel: " +std::to_string(delta));
                         }
@@ -844,6 +863,7 @@ void CAR::receiveAGF(AGF * agfPacket)
             }
             else
             {
+
                // LOG_EV<<"my distence is "<<myDistance<<" delta "<<delta<<" myan "<<getAngel()/ (2 * PI) * 360<<" prean "<<aimanchor.getPreviousForwarderAngel()/ (2 * PI) * 360<<endl;
                 EV_LOG(" neighbors: "+globalPositionTable.getHostName(getSelfIPAddress())+" too far "+std::to_string(myDistance)+" not in same line "+std::to_string(delta));
             }
@@ -891,9 +911,15 @@ void CAR::trysendAGF(AGF * agfPacket,cMessage* timer)
 }
 bool CAR::isParallel(double angle1,double angle2,double degree,double& diffdegree)
 {
-    double adjustedangle1 = adjustVectorAngle(angle1)/ (2 * PI) * 360;
-    double adjustedangle2 = adjustVectorAngle(angle2) / (2 * PI) * 360;
+    double adjustedangle1=angle1;
+    double adjustedangle2=angle2;
+    if(is0and180Pall)
+    {
+         adjustedangle1 = adjustVectorAngle(angle1)/ (2 * PI) * 360;
+         adjustedangle2 = adjustVectorAngle(angle2) / (2 * PI) * 360;
+    }
     diffdegree = adjustedangle1 - adjustedangle2;
+
     //LOG_EV<< "diffdegree: "<<diffdegree<<endl;
     if(diffdegree<0)
         diffdegree=-diffdegree;

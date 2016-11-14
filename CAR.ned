@@ -37,13 +37,15 @@ simple CAR
         double neighborValidityInterval @unit("s") = default(30s);
         int udpPort = default(269);
         double alpha @unit("degrees")= default(18degrees);
-        double communicationRange @unit("m")= default(1000m);
+        double communicationRange @unit("m")= default(700m);
         int stGuardTTL @unit("ms") = default(255ms);
         int trGuardTTL @unit("ms") = default(255ms);
         double beaconInterval @unit("s") = default(5s);	
         double GuardedRadius @unit("m")= default(400m);
         double nextRUtimer @unit("s") = default(0.02s); 
-             	
+        bool usingCommunacteDirection = default(true);
+        bool is0and180Pall=  default(true);
+        bool isUsingJunctionCars = default(true);
     gates:
         input ipIn;
         output ipOut;

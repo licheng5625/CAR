@@ -46,6 +46,7 @@ void CAR::initialize( int stage){
         stGuardTTL = par("stGuardTTL");
         is0and180Pall= par("is0and180Pall");
         isUsingJunctionCars= par("isUsingJunctionCars");
+        usingisCoordinator= par("usingisCoordinator");
        // nextRUtimer= par("nextRUtimer");
       //  RUliftime= par("RUliftime");
         routingTable = check_and_cast<IRoutingTable *>(getModuleByPath(par("routingTableModule")));
@@ -997,4 +998,25 @@ void CAR::completeRouteDiscovery(const IPv4Address & destAddr)
     }
     // clear the multimap
     delayPacketlist.removePacket(destAddr);
+}
+bool CAR::isCoordinator()
+{
+    if (isLocalateInIntersection())
+    {
+        return true;
+    }
+    std::vector<IPvXAddress> neighborAddresses = neighborPositionTable.getAddresses();
+    std::vector<std::string> neighborCarRoadList;
+    std::vector<std::string> RoadList;
+
+    for (int i=0 ;i<neighborAddresses.size();i++)
+    {
+        neighborCarRoadList.push_back(globalPositionTable.getRoadID(neighborAddresses[i]));
+    }
+    for (int i=0 ;i<neighborCarRoadList.size();i++)
+        {
+          if( isRoadVertical(getRoadID(),neighborCarRoadList[i])&&hasJunction(getRoadID(),neighborCarRoadList[i]))
+              return true;
+        }
+    return false;
 }

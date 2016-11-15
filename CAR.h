@@ -53,6 +53,7 @@ protected:
     int seqNumOfPGB;
     bool usingCommunacteDirection;
     bool isUsingJunctionCars;
+    bool usingisCoordinator;
     // communication Range
     double communicationRange;
     double GuardedRadius;
@@ -119,7 +120,7 @@ private:
     double getVectorAngle(Coord vector);
     double adjustVectorAngle(double angle);
     void completeRouteDiscovery(const IPv4Address & destAddr);
-
+    bool isCoordinator();
 
  };
 

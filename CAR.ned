@@ -46,6 +46,8 @@ simple CAR
         bool usingCommunacteDirection = default(true);
         bool is0and180Pall=  default(true);
         bool isUsingJunctionCars = default(true);
+        bool usingisCoordinator = default(true);
+        
     gates:
         input ipIn;
         output ipOut;

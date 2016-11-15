@@ -768,7 +768,8 @@ void CAR::receivePGB(PGB * pgbPacket)
                           //  std::cout<<getHostName()<<"    "<< pgbPacket->getASetOfAnchorPoints().back().getPosition()<<"   "<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                         }else
                         {
-                            if(isLocalateInIntersection()&&isUsingJunctionCars)
+//
+                            if((isLocalateInIntersection()||(usingisCoordinator&&isCoordinator()))||isUsingJunctionCars)
                             {
                                 EV_LOG("i am in the junction");
                                 cout<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;

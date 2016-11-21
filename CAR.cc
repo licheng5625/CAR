@@ -1017,7 +1017,7 @@ bool CAR::isCoordinator()
     for (int i=0 ;i<neighborCarRoadList.size();i++)
         {
           if( isLocalateInIntersection(neighborCarRoadList[i]))
-                return true;
+                continue;
           if( isRoadVertical(getRoadID(),neighborCarRoadList[i]))
               return true;
         }

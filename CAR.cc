@@ -743,6 +743,7 @@ void CAR::receivePGB(PGB * pgbPacket)
             else
                 {
                     EV_LOG ( "passing on the PGB packet" );
+                    LOG_EV<<"passing on the PGB packet"<<endl;
                     std::cout << pgbPacket->getPreviousForwarderSpeed() << "    " << getSelfSpeed();
                     pgbPacket->setPreviousForwarderSpeed(currentSpeed);
                     pgbPacket->setPreviousForwarderPosition(currentPosition);
@@ -756,11 +757,11 @@ void CAR::receivePGB(PGB * pgbPacket)
                     if(!isParallel(previousForwarderAngel,getAngel(),alpha,delta) )
                         {
                             cout<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
-                            CAR_EV<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
+                            LOG_EV<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
                             cout<<currentSpeed <<"   "<< getAngel()<<endl;
                             CAR_EV<<currentSpeed <<"   "<< getAngel()<<endl;
                             EV_LOG ( "add anchor with angel: " +std::to_string(delta));
-                            //LOG_EV<<"add anchor with angel: " <<std::to_string(delta)<<endl;
+                            LOG_EV<<"add anchor with angel: " <<std::to_string(delta)<<endl;
                             anchor  newAnchorPoint = addAsAnAnchor(theSpeedOfPreviousForwarder, theSpeedOfPreviousForwarder, thePositionOfPrreviousForwarder, currentPosition,PreviousForwarderHostName,getHostName(),previousForwarderAngel,getAngel());
                             std::cout<< pgbPacket->getASetOfAnchorPoints().size()<< endl;
                             anchorSet.push_back(newAnchorPoint);
@@ -769,9 +770,10 @@ void CAR::receivePGB(PGB * pgbPacket)
                         }else
                         {
 //
-                            if((isLocalateInIntersection()||(usingisCoordinator&&isCoordinator()))||isUsingJunctionCars)
+                            if((isLocalateInIntersection()||(usingisCoordinator&&isCoordinator()))&&isUsingJunctionCars)
                             {
                                 EV_LOG("i am in the junction");
+
                                 cout<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
                                 CAR_EV<<theSpeedOfPreviousForwarder <<"   "<< previousForwarderAngel<<endl;
                                 cout<<currentSpeed <<"   "<< getAngel()<<endl;
